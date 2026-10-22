@@ -19,7 +19,10 @@ export type AuditAction =
   | 'user.updated'
   | 'user.activated'
   | 'user.deactivated'
-  | 'user.password_reset';
+  | 'user.password_reset'
+  | 'branding.updated'
+  | 'branding.asset_uploaded'
+  | 'branding.asset_removed';
 
 export interface AuditEntry {
   readonly actorUserId: string | null;

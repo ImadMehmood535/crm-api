@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from '@application/modules/auth/AuthModule';
+import { BrandingModule } from '@application/modules/branding/BrandingModule';
 import { DeveloperModule } from '@application/modules/developer/DeveloperModule';
 import { HealthModule } from '@application/modules/health/HealthModule';
 import { InviteModule } from '@application/modules/invite/InviteModule';
@@ -11,6 +12,8 @@ import { RbacModule } from '@application/modules/rbac/RbacModule';
 import { TenantUserModule } from '@application/modules/tenantuser/TenantUserModule';
 
 import { AuthController } from './controllers/AuthController';
+import { BrandingAssetsController } from './controllers/BrandingAssetsController';
+import { BrandingController } from './controllers/BrandingController';
 import { HealthController } from './controllers/HealthController';
 import { PlatformAdminsController } from './controllers/PlatformAdminsController';
 import { PlatformDevelopersController } from './controllers/PlatformDevelopersController';
@@ -33,6 +36,7 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     PlatformInsightsModule,
     RbacModule,
     TenantUserModule,
+    BrandingModule,
   ],
   controllers: [
     HealthController,
@@ -45,6 +49,8 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     PermissionsController,
     RolesController,
     UsersController,
+    BrandingController,
+    BrandingAssetsController,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })

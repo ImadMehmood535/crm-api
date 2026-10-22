@@ -51,13 +51,14 @@ password: 403 `ORGANIZATION_SUSPENDED` when the user's company is suspended, oth
 - **THEN** the API answers 401 `INVALID_CREDENTIALS`
 
 ### Requirement: AuthUser shape
-`AuthUser` SHALL be `{ id, email, firstName, lastName, plane, roles, isSuperUser, organization, mustResetPassword, permissions }`.
-`roles` lists the codes of the user's active roles, and `permissions` lists the user's effective
-`module.action` codes.
+`AuthUser` SHALL be `{ id, email, firstName, lastName, plane, roles, isSuperUser, organization, mustResetPassword, permissions, level }`.
+`roles` lists the codes of the user's active roles, `permissions` lists the user's effective
+`module.action` codes, and `level` is the user's hierarchy level (`owner`, `admin`,
+`department_head` or `member`), or `null` on the platform plane.
 
 #### Scenario: Fields present
 - **WHEN** any user logs in
-- **THEN** `user` has exactly the ten fields above, and no password, hash or token field
+- **THEN** `user` has exactly the eleven fields above, and no password, hash or token field
 
 ### Requirement: Plane and organization
 `plane` SHALL be `platform` for users without a company and `tenant` otherwise. `organization` is

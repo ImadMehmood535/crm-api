@@ -7,22 +7,24 @@ account are protected, and nobody can manage someone holding more access than th
 ## Requirements
 
 ### Requirement: Tenant user shape and listing
-A `TenantUser` SHALL be `{ id, email, firstName, lastName, status, isOwner, roles: [{ id, name, code }], permissions, lastLoginAt, createdAt }`.
-`GET /api/v1/users` (needs `users.view`) lists the caller's company's users, oldest first, with
-`search` (name or email), `status` (`active`/`inactive`) and `meta`. `GET /api/v1/users/{id}`
-returns one user. Another company's user is 404.
+A `TenantUser` SHALL be `{ id, email, firstName, lastName, status, level, isOwner, roles: [{ id, name, code }], teams: [{ id, name }], permissions, lastLoginAt, createdAt }`.
+`GET /api/v1/users` (needs `users.view`) lists the users of the caller's company that the caller may
+see, oldest first, with `search` (name or email), `status` (`active`/`inactive`) and `meta`.
+`GET /api/v1/users/{id}` returns one such user. Another company's user, or one the caller may not
+see, is 404.
 
 #### Scenario: List
 - **WHEN** the owner lists users
-- **THEN** each user shows roles, effective permissions and `isOwner`, which is true only for the owner
+- **THEN** each user shows level, roles, teams, effective permissions and `isOwner`, which is true only for the owner
 
 #### Scenario: Other company
 - **WHEN** the caller requests a user id from another company
 - **THEN** the API answers 404 `NOT_FOUND`
 
 ### Requirement: Create user
-`POST /api/v1/users` with `{ email, firstName, lastName, roleIds[] }` (needs `users.create`) SHALL
-answer 201 with `{ user, temporaryPassword }`. The new user must reset the password at first login.
+`POST /api/v1/users` with `{ email, firstName, lastName, roleIds[], level?, teamIds? }` (needs
+`users.create`) SHALL answer 201 with `{ user, temporaryPassword }`. The new user must reset the
+password at first login.
 - at least one role is required;
 - unknown, inactive or other-company role ids are 422 on `roleIds`;
 - the built-in role is 403 `SYSTEM_ROLE_PROTECTED`;
@@ -37,9 +39,20 @@ answer 201 with `{ user, temporaryPassword }`. The new user must reset the passw
 - **WHEN** `roleIds` is empty
 - **THEN** the API answers 422 with a detail for `roleIds`
 
+
+### Requirement: New user level and teams
+On create, `level` SHALL default to `member` and must be a level the caller may create (403
+`FORBIDDEN_OPERATION` otherwise). Every id in `teamIds` must be an active team the caller may manage
+(422 on `teamIds` otherwise). The memberships are written in the same transaction as the user.
+
+#### Scenario: Head adds a member to a team
+- **WHEN** the head of "Finance" creates a member with `teamIds` [Payables]
+- **THEN** the member is listed in Payables and is visible to the head
+
 ### Requirement: Update user
-`PATCH /api/v1/users/{id}` with `{ firstName?, lastName?, roleIds? }` (needs `users.edit`) SHALL
-update the given fields and answer with the `TenantUser`. Role rules are the same as on create.
+`PATCH /api/v1/users/{id}` with `{ firstName?, lastName?, roleIds?, level? }` (needs `users.edit`)
+SHALL update the given fields and answer with the `TenantUser`. Role rules are the same as on
+create, and level changes follow the org-hierarchy rules.
 Changing your own roles is 403 `FORBIDDEN_OPERATION`.
 
 #### Scenario: Change roles

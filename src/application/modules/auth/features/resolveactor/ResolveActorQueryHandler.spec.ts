@@ -36,6 +36,7 @@ describe('ResolveActorQueryHandler', () => {
       permissions: [],
       isSuperUser: true,
       mustResetPassword: false,
+      level: 'owner',
     });
   });
 

@@ -28,11 +28,25 @@ export const ALL_CODES = [
   'units.delete',
   'branding.view',
   'branding.edit',
+  'departments.view',
+  'departments.create',
+  'departments.edit',
+  'departments.delete',
+  'teams.view',
+  'teams.create',
+  'teams.edit',
+  'teams.delete',
 ];
 
 export const owner = actor({ permissions: ALL_CODES });
 export const withPermissions = (...codes: string[]) =>
-  actor({ userId: 'staff-1', permissions: codes, roles: ['staff'], isSuperUser: false });
+  actor({
+    userId: 'staff-1',
+    permissions: codes,
+    roles: ['staff'],
+    isSuperUser: false,
+    level: 'member',
+  });
 
 export const customRole = (permissions: string[] = ['users.view'], id = 'role-1'): Role =>
   Role.rehydrate(id, 'org-1', 'Sales', 'sales', null, permissions, false, true);
@@ -68,8 +82,10 @@ export const tenantUserReadModel = (
   firstName: 'Hira',
   lastName: 'Shah',
   status: 'active',
+  level: 'member',
   isOwner: false,
   roles: [{ id: 'role-1', name: 'Sales', code: 'sales' }],
+  teams: [],
   permissions: ['users.view'],
   lastLoginAt: null,
   createdAt: '2026-10-23T00:00:00.000Z',

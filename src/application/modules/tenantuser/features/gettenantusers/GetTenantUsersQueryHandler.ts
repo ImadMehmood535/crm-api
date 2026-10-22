@@ -7,7 +7,7 @@ import {
   TENANT_USER_QUERIES,
   TenantUserReadModel,
 } from '@infrastructure/queries/abstraction/ITenantUserQueries';
-import { requirePermission } from '@application/common/Authorization';
+import { requirePermission, viewerOf } from '@application/common/Authorization';
 
 import { GetTenantUsersQuery } from './GetTenantUsersQuery';
 
@@ -20,7 +20,11 @@ export class GetTenantUsersQueryHandler implements IQueryHandler<
 
   async execute(query: GetTenantUsersQuery): Promise<PagedResult<TenantUserReadModel>> {
     const organizationId = requirePermission(query.actor, 'users.view');
-    const { rows, total } = await this.tenantUsers.findList({ ...query.filter, organizationId });
+    const { rows, total } = await this.tenantUsers.findList({
+      ...query.filter,
+      organizationId,
+      viewer: viewerOf(query.actor),
+    });
     return PagedResult.of(rows, query.filter, total);
   }
 }

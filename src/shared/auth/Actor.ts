@@ -1,3 +1,5 @@
+import { UserLevel } from './UserLevel';
+
 export type Plane = 'platform' | 'tenant';
 
 /** The authenticated caller, resolved from the access token and the database on every request. */
@@ -12,6 +14,8 @@ export interface Actor {
   readonly permissions: readonly string[];
   readonly isSuperUser: boolean;
   readonly mustResetPassword: boolean;
+  /** Hierarchy level (owner | admin | department_head | member); null on the platform plane. */
+  readonly level: UserLevel | null;
 }
 
 /** Where a request came from; recorded on sessions, never used for decisions. */

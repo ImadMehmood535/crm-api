@@ -15,7 +15,7 @@ import {
   IUserRepository,
   USER_REPOSITORY,
 } from '@infrastructure/repositories/abstraction/IUserRepository';
-import { requirePermission } from '@application/common/Authorization';
+import { companyViewer, requirePermission, viewerOf } from '@application/common/Authorization';
 
 import { TenantUserResponse } from '../gettenantuser/TenantUserResponse';
 import { assertCanManage, forbiddenOperation, userNotFound } from '../../TenantUserRules';
@@ -38,7 +38,7 @@ export class ChangeTenantUserStatusCommandHandler implements ICommandHandler<
   async execute(command: ChangeTenantUserStatusCommand): Promise<TenantUserResponse> {
     const { actor } = command;
     const organizationId = requirePermission(actor, 'users.deactivate');
-    const target = await this.tenantUsers.findById(organizationId, command.id);
+    const target = await this.tenantUsers.findById(organizationId, command.id, viewerOf(actor));
     const user = target ? await this.users.findTenantUser(organizationId, command.id) : null;
     if (!target || !user) throw userNotFound();
     const deactivating = command.change === 'deactivate';
@@ -66,6 +66,8 @@ export class ChangeTenantUserStatusCommandHandler implements ICommandHandler<
         tx,
       );
     });
-    return TenantUserResponse.from((await this.tenantUsers.findById(organizationId, command.id))!);
+    return TenantUserResponse.from(
+      (await this.tenantUsers.findById(organizationId, command.id, companyViewer(actor)))!,
+    );
   }
 }

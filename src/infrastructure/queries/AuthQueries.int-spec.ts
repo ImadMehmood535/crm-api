@@ -41,6 +41,7 @@ describe('AuthQueries', () => {
         organization: null,
         mustResetPassword: false,
         permissions: [],
+        level: null,
       },
     });
   });
@@ -94,7 +95,7 @@ describe('AuthQueries', () => {
 
     const account = await queries.findAccount(id);
 
-    expect(account?.user.permissions).toHaveLength(18);
+    expect(account?.user.permissions).toHaveLength(26);
     expect(account?.user.isSuperUser).toBe(true);
   });
 

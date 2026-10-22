@@ -35,13 +35,19 @@ describe('Tenant RBAC (e2e)', () => {
   const staffWith = async (
     email: string,
     codes: string[],
+    level: 'admin' | 'member' = 'member',
   ): Promise<{ id: string; token: string; roleId: string }> => {
     const roleId = await createRole(sequelize, {
       code: `r_${email.split('@')[0]}`,
       organizationId: orgId,
     });
     await grant(sequelize, roleId, codes);
-    const id = await createUser(sequelize, { email, organizationId: orgId, roleIds: [roleId] });
+    const id = await createUser(sequelize, {
+      email,
+      organizationId: orgId,
+      roleIds: [roleId],
+      level,
+    });
     return { id, token: await loginToken(app, email), roleId };
   };
 
@@ -69,15 +75,17 @@ describe('Tenant RBAC (e2e)', () => {
   afterAll(() => app.close());
 
   describe('permission catalogue', () => {
-    it('should give the owner all 18 codes and return the matrix', async () => {
+    it('should give the owner all 26 codes and return the matrix', async () => {
       const me = await as(owner, 'get', '/api/v1/auth/me').expect(200);
-      expect(me.body.data.permissions).toHaveLength(18);
+      expect(me.body.data.permissions).toHaveLength(26);
 
       const res = await as(owner, 'get', '/api/v1/permissions').expect(200);
 
       expect(res.body.data.map((m: { module: string }) => m.module)).toEqual([
         'users',
         'roles',
+        'departments',
+        'teams',
         'projects',
         'units',
         'branding',
@@ -144,7 +152,7 @@ describe('Tenant RBAC (e2e)', () => {
         ['developer_super_user', true],
         ['hr_assistant', false],
       ]);
-      expect(list.body.data[0].permissions).toHaveLength(18);
+      expect(list.body.data[0].permissions).toHaveLength(26);
       const dup = await createRoleApi(owner, { name: 'hr assistant', permissions: [] }).expect(409);
       expect(dup.body.error.code).toBe('ROLE_NAME_CONFLICT');
     });
@@ -385,12 +393,17 @@ describe('Tenant RBAC (e2e)', () => {
     });
 
     it('should protect the owner and users stronger than the caller', async () => {
-      const manager = await staffWith('mgr@skyline.example.com', [
-        'users.view',
-        'users.edit',
-        'users.deactivate',
-      ]);
-      const stronger = await staffWith('strong@skyline.example.com', ['users.view', 'roles.edit']);
+      // Admins see the owner and other admins, so the safeguards (not visibility) answer here.
+      const manager = await staffWith(
+        'mgr@skyline.example.com',
+        ['users.view', 'users.edit', 'users.deactivate'],
+        'admin',
+      );
+      const stronger = await staffWith(
+        'strong@skyline.example.com',
+        ['users.view', 'roles.edit'],
+        'admin',
+      );
 
       const toOwner = await as(manager.token, 'post', `/api/v1/users/${ownerId}/deactivate`).expect(
         403,

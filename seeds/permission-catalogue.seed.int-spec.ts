@@ -10,7 +10,7 @@ describe('permission catalogue seed', () => {
   });
   afterAll(() => sequelize.close());
 
-  it('should hold the 18 frontend codes once each, even when run again', async () => {
+  it('should hold the 26 catalogue codes once each, even when run again', async () => {
     await seedPermissionCatalogue(sequelize);
     await seedPermissionCatalogue(sequelize);
 
@@ -27,6 +27,14 @@ describe('permission catalogue seed', () => {
       'roles.create',
       'roles.edit',
       'roles.delete',
+      'departments.view',
+      'departments.create',
+      'departments.edit',
+      'departments.delete',
+      'teams.view',
+      'teams.create',
+      'teams.edit',
+      'teams.delete',
       'projects.view',
       'projects.create',
       'projects.edit',

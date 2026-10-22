@@ -2,6 +2,7 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { Actor } from '@shared/auth/Actor';
+import { UserLevel } from '@shared/auth/UserLevel';
 import { UnauthenticatedError } from '@shared/errors/AppError';
 import { AUTH_QUERIES, IAuthQueries } from '@infrastructure/queries/abstraction/IAuthQueries';
 import {
@@ -43,6 +44,7 @@ export class ResolveActorQueryHandler implements IQueryHandler<ResolveActorQuery
       permissions: user.permissions,
       isSuperUser: user.isSuperUser,
       mustResetPassword: user.mustResetPassword,
+      level: user.level as UserLevel | null,
     };
   }
 }

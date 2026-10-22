@@ -27,6 +27,7 @@ export function account(overrides: Partial<AccountReadModel> = {}): AccountReadM
       organization: { id: 'org-1', name: 'Skyline', slug: 'skyline', status: 'active' },
       mustResetPassword: false,
       permissions: [],
+      level: 'owner',
     },
     ...overrides,
   };
@@ -42,6 +43,7 @@ export function actor(overrides: Partial<Actor> = {}): Actor {
     permissions: [],
     isSuperUser: true,
     mustResetPassword: false,
+    level: 'owner',
     ...overrides,
   };
 }

@@ -20,7 +20,7 @@ import {
   IPasswordHasher,
   PASSWORD_HASHER,
 } from '@infrastructure/security/abstraction/IPasswordHasher';
-import { requirePermission } from '@application/common/Authorization';
+import { requirePermission, viewerOf } from '@application/common/Authorization';
 
 import { TenantUserWithPasswordResponse } from '../gettenantuser/TenantUserResponse';
 import { assertCanManage, forbiddenOperation, userNotFound } from '../../TenantUserRules';
@@ -44,7 +44,7 @@ export class ResetTenantUserPasswordCommandHandler implements ICommandHandler<
   async execute(command: ResetTenantUserPasswordCommand): Promise<TenantUserWithPasswordResponse> {
     const { actor } = command;
     const organizationId = requirePermission(actor, 'users.edit');
-    const target = await this.tenantUsers.findById(organizationId, command.id);
+    const target = await this.tenantUsers.findById(organizationId, command.id, viewerOf(actor));
     if (!target) throw userNotFound();
     if (command.id === actor.userId) {
       throw forbiddenOperation('Use "change password" for your own account.');

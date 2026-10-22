@@ -4,6 +4,7 @@ import { BaseModel } from '../BaseModel';
 import { OrganizationModel } from '../OrganizationAggregate/OrganizationModel';
 import { UserCredentialModel } from './UserCredentialModel';
 
+import { UserLevel } from './UserLevel';
 import { UserStatus } from './UserStatus';
 
 @Table({ tableName: 'users', underscored: true, timestamps: true })
@@ -29,6 +30,9 @@ export class UserModel extends BaseModel {
 
   @Column({ type: DataType.BOOLEAN, allowNull: false })
   isSystem!: boolean;
+
+  @Column({ type: DataType.STRING(20), allowNull: true })
+  level!: UserLevel | null;
 
   @Column({ type: DataType.DATE, allowNull: true })
   lastLoginAt!: Date | null;

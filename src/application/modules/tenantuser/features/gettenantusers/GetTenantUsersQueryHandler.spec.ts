@@ -23,6 +23,7 @@ describe('Tenant user query handlers', () => {
       pageSize: 20,
       status: 'active',
       organizationId: 'org-1',
+      viewer: { userId: 'user-1', level: 'owner' },
     });
     await expect(
       new GetTenantUsersQueryHandler(queries).execute(

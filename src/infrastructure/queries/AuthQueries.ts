@@ -8,12 +8,15 @@ import { UserModel } from '@domain/aggregates/UserAggregate/UserModel';
 
 import { AccountReadModel, IAuthQueries } from './abstraction/IAuthQueries';
 import { effectivePermissionsSql } from './EffectivePermissionsSql';
+import { effectiveLevelSql } from './VisibilitySql';
 
 const SUPER_USER_ROLES = ['platform_super_user', 'developer_super_user'];
 
 const ACTIVE_ROLE_CODES_SQL = `
   SELECT r.code FROM user_roles ur JOIN roles r ON r.id = ur.role_id
   WHERE ur.user_id = :userId AND r.is_active ORDER BY r.code`;
+
+const LEVEL_SQL = `SELECT ${effectiveLevelSql('u')} AS code FROM users u WHERE u.id = :userId`;
 
 const PERMISSIONS_SQL = `SELECT code FROM (${effectivePermissionsSql(':userId')}) x ORDER BY code`;
 
@@ -26,9 +29,10 @@ export class AuthQueries implements IAuthQueries {
       include: [OrganizationModel, UserCredentialModel],
     });
     if (!row) return null;
-    const [roles, permissions] = await Promise.all([
+    const [roles, permissions, [level]] = await Promise.all([
       this.codes(ACTIVE_ROLE_CODES_SQL, userId),
       this.codes(PERMISSIONS_SQL, userId),
+      this.codes(LEVEL_SQL, userId),
     ]);
     const organization = row.organization;
     return {
@@ -52,6 +56,7 @@ export class AuthQueries implements IAuthQueries {
           : null,
         mustResetPassword: row.credential?.mustResetPassword ?? false,
         permissions,
+        level: level ?? null,
       },
     };
   }

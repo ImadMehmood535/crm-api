@@ -16,6 +16,7 @@ import {
   tenantUserReadModel,
   withPermissions,
 } from '../../../../../../test/support/tenant-mocks';
+import { atLevel } from '../../../../../../test/support/org-mocks';
 import { User } from '@domain/aggregates/UserAggregate/User';
 import { NotFoundError } from '@shared/errors/AppError';
 
@@ -118,6 +119,23 @@ describe('Tenant user management handlers', () => {
       code: 'FORBIDDEN_OPERATION',
       message: 'You cannot change your own roles.',
     });
+  });
+
+  it('should change a level only when the caller may create both the current and the new level', async () => {
+    const { users, update } = setup();
+    await update.execute(new UpdateTenantUserCommand(owner, 'user-2', { level: 'admin' }, META));
+    expect(users.update).toHaveBeenCalledWith(expect.objectContaining({ level: 'admin' }), {});
+
+    await expect(
+      setup().update.execute(
+        new UpdateTenantUserCommand(atLevel('admin'), 'user-2', { level: 'admin' }, META),
+      ),
+    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN_OPERATION' });
+    await expect(
+      setup(tenantUserReadModel({ level: 'admin' })).update.execute(
+        new UpdateTenantUserCommand(atLevel('admin'), 'user-2', { level: 'member' }, META),
+      ),
+    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN_OPERATION' });
   });
 
   it('should deactivate with session revocation, reactivate without, and refuse self-deactivation', async () => {

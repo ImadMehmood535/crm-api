@@ -1,5 +1,6 @@
 import { Actor } from '@shared/auth/Actor';
 import { ForbiddenError } from '@shared/errors/AppError';
+import { Viewer } from '@infrastructure/queries/abstraction/ITenantUserQueries';
 
 const PLATFORM_SUPER_USER = 'platform_super_user';
 
@@ -42,4 +43,14 @@ export function assertHoldsAll(
   if (codes.some((code) => !actor.permissions.includes(code))) {
     throw new ForbiddenError('PERMISSION_ESCALATION', message);
   }
+}
+
+/** The caller as a hierarchy viewer (who may see whom). */
+export function viewerOf(actor: Actor): Viewer {
+  return { userId: actor.userId, level: actor.level ?? 'member' };
+}
+
+/** For reading back a row the caller has just written: whole-company scope. */
+export function companyViewer(actor: Actor): Viewer {
+  return { userId: actor.userId, level: 'owner' };
 }

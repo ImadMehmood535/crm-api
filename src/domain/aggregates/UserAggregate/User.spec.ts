@@ -23,6 +23,22 @@ describe('User', () => {
     });
   });
 
+  describe('levels', () => {
+    it('should default tenant users to member and keep platform users without a level', () => {
+      expect(User.createTenantUser('org-1', props).level).toBe('member');
+      expect(User.createTenantUser('org-1', { ...props, level: 'admin' }).level).toBe('admin');
+      expect(User.createPlatformAdmin(props).level).toBeNull();
+    });
+
+    it('should change level', () => {
+      const user = User.createTenantUser('org-1', props);
+
+      user.changeLevel('department_head');
+
+      expect(user.level).toBe('department_head');
+    });
+  });
+
   describe('createPlatformAdmin', () => {
     it('should create a platform user without a company', () => {
       expect(User.createPlatformAdmin(props).organizationId).toBeNull();

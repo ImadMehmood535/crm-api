@@ -11,6 +11,12 @@ import {
   tenantUserQueries,
   withPermissions,
 } from '../../../../../../test/support/tenant-mocks';
+import {
+  atLevel,
+  department,
+  departmentRepository,
+  teamRepository,
+} from '../../../../../../test/support/org-mocks';
 import { User } from '@domain/aggregates/UserAggregate/User';
 
 import { CreateTenantUserCommand } from './CreateTenantUserCommand';
@@ -36,20 +42,25 @@ describe('CreateTenantUserCommandHandler', () => {
           u.lastName,
           u.status,
           u.createdBy,
+          u.level,
         ),
       ),
     );
     const roles = roleRepository();
     roles.findActiveTenantRoles.mockResolvedValue([customRole()]);
+    const teams = teamRepository();
+    const departments = departmentRepository();
     const handler = new CreateTenantUserCommandHandler(
       users,
       roles,
+      teams,
+      departments,
       tenantUserQueries(),
       passwordHasher(),
       auditLog(),
       unitOfWork,
     );
-    return { handler, users, roles };
+    return { handler, users, roles, teams, departments };
   };
 
   it('should create a must-reset user with the deduplicated roles', async () => {
@@ -93,7 +104,11 @@ describe('CreateTenantUserCommandHandler', () => {
     roles.findActiveTenantRoles.mockResolvedValueOnce([customRole(['roles.edit'])]);
     await expect(
       handler.execute(
-        new CreateTenantUserCommand(withPermissions('users.create', 'users.view'), input, META),
+        new CreateTenantUserCommand(
+          { ...withPermissions('users.create', 'users.view'), level: 'admin' },
+          input,
+          META,
+        ),
       ),
     ).rejects.toMatchObject({ code: 'PERMISSION_ESCALATION' });
 
@@ -103,5 +118,64 @@ describe('CreateTenantUserCommandHandler', () => {
     ).rejects.toMatchObject({
       code: 'EMAIL_CONFLICT',
     });
+  });
+
+  it('should default the level to member and refuse levels the caller may not create', async () => {
+    const { handler, users } = setup();
+    await handler.execute(new CreateTenantUserCommand(owner, input, META));
+    expect(users.save.mock.calls[0][0].level).toBe('member');
+
+    await expect(
+      handler.execute(
+        new CreateTenantUserCommand(atLevel('admin'), { ...input, level: 'admin' }, META),
+      ),
+    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN_OPERATION' });
+    await expect(
+      handler.execute(new CreateTenantUserCommand(atLevel('member'), input, META)),
+    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN_OPERATION' });
+  });
+
+  it('should let an admin create a department head', async () => {
+    const { handler, users } = setup();
+
+    await handler.execute(
+      new CreateTenantUserCommand(atLevel('admin'), { ...input, level: 'department_head' }, META),
+    );
+
+    expect(users.save.mock.calls[0][0].level).toBe('department_head');
+  });
+
+  it("should add a head's new member to a team of their department", async () => {
+    const { handler, teams } = setup();
+
+    await handler.execute(
+      new CreateTenantUserCommand(
+        atLevel('department_head'),
+        { ...input, teamIds: ['team-1', 'team-1'] },
+        META,
+      ),
+    );
+
+    expect(teams.addMember).toHaveBeenCalledTimes(1);
+    expect(teams.addMember).toHaveBeenCalledWith('team-1', 'user-2', 'department_head-1', {});
+  });
+
+  it('should answer 422 on teamIds for a team the caller may not manage or that does not exist', async () => {
+    const { handler, teams, departments } = setup();
+    departments.findById.mockResolvedValue(department('someone-else'));
+    await expect(
+      handler.execute(
+        new CreateTenantUserCommand(
+          atLevel('department_head'),
+          { ...input, teamIds: ['team-1'] },
+          META,
+        ),
+      ),
+    ).rejects.toMatchObject({ status: 422, details: [{ field: 'teamIds' }] });
+
+    teams.findById.mockResolvedValue(null);
+    await expect(
+      handler.execute(new CreateTenantUserCommand(owner, { ...input, teamIds: ['team-x'] }, META)),
+    ).rejects.toMatchObject({ status: 422, details: [{ field: 'teamIds' }] });
   });
 });

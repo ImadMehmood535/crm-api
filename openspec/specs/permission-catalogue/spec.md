@@ -13,19 +13,17 @@ tenant plane.
 
 #### Scenario: Read catalogue
 - **WHEN** a tenant user holding `roles.view` calls `GET /api/v1/permissions`
-- **THEN** the response lists the modules `users`, `roles`, `projects`, `units` and `branding` with their actions, for example `{ action: "view", label: "View users", code: "users.view" }`
+- **THEN** the response lists the modules `users`, `roles`, `departments`, `teams`, `projects`, `units` and `branding` with their actions, for example `{ action: "view", label: "View users", code: "users.view" }`
 
 #### Scenario: Without permission
 - **WHEN** a tenant user without `roles.view` calls it
 - **THEN** the API answers 403 `PERMISSION_DENIED`
 
 ### Requirement: Catalogue contents
-The catalogue SHALL hold exactly these codes:
-- `users.view`, `users.create`, `users.edit`, `users.deactivate`;
-- `roles.view`, `roles.create`, `roles.edit`, `roles.delete`;
-- `projects.view`, `projects.create`, `projects.edit`, `projects.delete`;
-- `units.view`, `units.create`, `units.edit`, `units.delete`;
-- `branding.view`, `branding.edit`.
+The catalogue SHALL hold exactly 26 codes:
+- `view`, `create`, `edit` and `delete` for `roles`, `departments`, `teams`, `projects` and `units`;
+- `view`, `create`, `edit` and `deactivate` for `users`;
+- `view` and `edit` for `branding`.
 
 It lives in database tables filled by an idempotent seed, never in application logic.
 
@@ -43,7 +41,7 @@ Platform users have none. Permissions are resolved on every request, so changes 
 
 #### Scenario: Owner holds everything
 - **WHEN** a company owner signs in
-- **THEN** `user.permissions` contains all 18 catalogue codes
+- **THEN** `user.permissions` contains all 26 catalogue codes
 
 #### Scenario: Union of roles
 - **WHEN** a user holds role A granting `users.view` and role B granting `projects.view`

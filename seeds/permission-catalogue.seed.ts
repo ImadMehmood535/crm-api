@@ -32,6 +32,26 @@ export const PERMISSION_CATALOGUE: readonly CatalogueModule[] = [
     ],
   },
   {
+    code: 'departments',
+    name: 'Departments',
+    actions: [
+      ['view', 'View departments'],
+      ['create', 'Create departments'],
+      ['edit', 'Edit departments and their heads'],
+      ['delete', 'Deactivate departments'],
+    ],
+  },
+  {
+    code: 'teams',
+    name: 'Teams',
+    actions: [
+      ['view', 'View teams'],
+      ['create', 'Create teams'],
+      ['edit', 'Edit teams and their members'],
+      ['delete', 'Deactivate teams'],
+    ],
+  },
+  {
     code: 'projects',
     name: 'Projects',
     actions: [

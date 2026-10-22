@@ -28,7 +28,15 @@ export type AuditAction =
   | 'project.deleted'
   | 'unit.created'
   | 'unit.updated'
-  | 'unit.deleted';
+  | 'unit.deleted'
+  | 'department.created'
+  | 'department.updated'
+  | 'department.deactivated'
+  | 'team.created'
+  | 'team.updated'
+  | 'team.deactivated'
+  | 'team.member_added'
+  | 'team.member_removed';
 
 export interface AuditEntry {
   readonly actorUserId: string | null;

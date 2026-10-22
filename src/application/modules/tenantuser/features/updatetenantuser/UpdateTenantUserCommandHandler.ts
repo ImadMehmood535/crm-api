@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { assertCanCreateLevel } from '@domain/aggregates/UserAggregate/UserLevel';
 import { AUDIT_LOG, IAuditLog } from '@infrastructure/audit/abstraction/IAuditLog';
 import { IUnitOfWork, UNIT_OF_WORK } from '@infrastructure/persistence/abstraction/IUnitOfWork';
 import {
@@ -15,7 +16,7 @@ import {
   IUserRepository,
   USER_REPOSITORY,
 } from '@infrastructure/repositories/abstraction/IUserRepository';
-import { requirePermission } from '@application/common/Authorization';
+import { companyViewer, requirePermission, viewerOf } from '@application/common/Authorization';
 
 import { TenantUserResponse } from '../gettenantuser/TenantUserResponse';
 import {
@@ -42,7 +43,7 @@ export class UpdateTenantUserCommandHandler implements ICommandHandler<
   async execute(command: UpdateTenantUserCommand): Promise<TenantUserResponse> {
     const { actor, changes } = command;
     const organizationId = requirePermission(actor, 'users.edit');
-    const target = await this.tenantUsers.findById(organizationId, command.id);
+    const target = await this.tenantUsers.findById(organizationId, command.id, viewerOf(actor));
     const user = target ? await this.users.findTenantUser(organizationId, command.id) : null;
     if (!target || !user) throw userNotFound();
     assertCanManage(actor, target);
@@ -52,6 +53,12 @@ export class UpdateTenantUserCommandHandler implements ICommandHandler<
 
     if (changes.firstName !== undefined || changes.lastName !== undefined) {
       user.rename(changes.firstName ?? user.firstName, changes.lastName ?? user.lastName);
+    }
+    if (changes.level !== undefined && changes.level !== target.level) {
+      const actorLevel = viewerOf(actor).level;
+      assertCanCreateLevel(actorLevel, target.level);
+      assertCanCreateLevel(actorLevel, changes.level);
+      user.changeLevel(changes.level);
     }
     const roleIds = changes.roleIds ? [...new Set(changes.roleIds)] : undefined;
     if (roleIds)
@@ -74,11 +81,13 @@ export class UpdateTenantUserCommandHandler implements ICommandHandler<
           oldValues: {
             firstName: target.firstName,
             lastName: target.lastName,
+            level: target.level,
             roleIds: target.roles.map((r) => r.id),
           },
           newValues: {
             firstName: user.firstName,
             lastName: user.lastName,
+            level: user.level,
             roleIds: roleIds ?? target.roles.map((r) => r.id),
           },
           ip: command.meta.ipAddress,
@@ -86,6 +95,8 @@ export class UpdateTenantUserCommandHandler implements ICommandHandler<
         tx,
       );
     });
-    return TenantUserResponse.from((await this.tenantUsers.findById(organizationId, command.id))!);
+    return TenantUserResponse.from(
+      (await this.tenantUsers.findById(organizationId, command.id, companyViewer(actor)))!,
+    );
   }
 }

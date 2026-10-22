@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
+import { OrgStructurePersistenceModule } from '@infrastructure/persistence/OrgStructurePersistenceModule';
 import { TenantPersistenceModule } from '@infrastructure/persistence/TenantPersistenceModule';
 
 import { ChangeTenantUserStatusCommandHandler } from './features/changetenantuserstatus/ChangeTenantUserStatusCommandHandler';
@@ -11,7 +12,7 @@ import { ResetTenantUserPasswordCommandHandler } from './features/resettenantuse
 import { UpdateTenantUserCommandHandler } from './features/updatetenantuser/UpdateTenantUserCommandHandler';
 
 @Module({
-  imports: [CqrsModule, TenantPersistenceModule],
+  imports: [CqrsModule, TenantPersistenceModule, OrgStructurePersistenceModule],
   providers: [
     GetTenantUsersQueryHandler,
     GetTenantUserQueryHandler,

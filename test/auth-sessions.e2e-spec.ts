@@ -89,6 +89,7 @@ describe('Auth sessions (e2e)', () => {
           organization: { id: orgId, name: 'Skyline', slug: 'skyline', status: 'active' },
           mustResetPassword: false,
           permissions: [],
+          level: 'member',
         },
       });
     });

@@ -8,6 +8,7 @@ import { HealthModule } from '@application/modules/health/HealthModule';
 import { InviteModule } from '@application/modules/invite/InviteModule';
 import { PlatformAdminModule } from '@application/modules/platformadmin/PlatformAdminModule';
 import { PlatformInsightsModule } from '@application/modules/platforminsights/PlatformInsightsModule';
+import { OrgStructureModule } from '@application/modules/orgstructure/OrgStructureModule';
 import { ProjectModule } from '@application/modules/project/ProjectModule';
 import { RbacModule } from '@application/modules/rbac/RbacModule';
 import { TenantUserModule } from '@application/modules/tenantuser/TenantUserModule';
@@ -22,7 +23,9 @@ import { PlatformDevelopersController } from './controllers/PlatformDevelopersCo
 import { PlatformInsightsController } from './controllers/PlatformInsightsController';
 import { PlatformInvitesController } from './controllers/PlatformInvitesController';
 import { PermissionsController } from './controllers/PermissionsController';
+import { DepartmentsController } from './controllers/DepartmentsController';
 import { ProjectsController } from './controllers/ProjectsController';
+import { TeamsController } from './controllers/TeamsController';
 import { PublicInvitesController } from './controllers/PublicInvitesController';
 import { RolesController } from './controllers/RolesController';
 import { UnitsController } from './controllers/UnitsController';
@@ -42,6 +45,7 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     TenantUserModule,
     BrandingModule,
     ProjectModule,
+    OrgStructureModule,
     UnitModule,
   ],
   controllers: [
@@ -59,6 +63,8 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     BrandingAssetsController,
     ProjectsController,
     UnitsController,
+    DepartmentsController,
+    TeamsController,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })

@@ -5,7 +5,7 @@ import {
   ITenantUserQueries,
   TENANT_USER_QUERIES,
 } from '@infrastructure/queries/abstraction/ITenantUserQueries';
-import { requirePermission } from '@application/common/Authorization';
+import { requirePermission, viewerOf } from '@application/common/Authorization';
 
 import { userNotFound } from '../../TenantUserRules';
 import { GetTenantUserQuery } from './GetTenantUserQuery';
@@ -20,7 +20,7 @@ export class GetTenantUserQueryHandler implements IQueryHandler<
 
   async execute(query: GetTenantUserQuery): Promise<TenantUserResponse> {
     const organizationId = requirePermission(query.actor, 'users.view');
-    const user = await this.tenantUsers.findById(organizationId, query.id);
+    const user = await this.tenantUsers.findById(organizationId, query.id, viewerOf(query.actor));
     if (!user) throw userNotFound();
     return TenantUserResponse.from(user);
   }

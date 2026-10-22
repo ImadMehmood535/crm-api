@@ -1,14 +1,18 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsEmail,
+  IsIn,
+  IsOptional,
   IsString,
   IsUUID,
   Length,
   MaxLength,
 } from 'class-validator';
+
+import { CREATABLE_LEVELS, UserLevel } from '@shared/auth/UserLevel';
 
 export class CreateTenantUserRequest {
   @ApiProperty({ example: 'hira@skyline.example.com' })
@@ -32,4 +36,16 @@ export class CreateTenantUserRequest {
   @ArrayMaxSize(50)
   @IsUUID('all', { each: true, message: 'One or more roles do not exist.' })
   roleIds!: string[];
+
+  @ApiPropertyOptional({ enum: CREATABLE_LEVELS, default: 'member' })
+  @IsOptional()
+  @IsIn(CREATABLE_LEVELS, { message: 'Choose a valid level.' })
+  level?: UserLevel;
+
+  @ApiPropertyOptional({ type: [String], format: 'uuid' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('all', { each: true, message: 'One or more teams cannot be used.' })
+  teamIds?: string[];
 }

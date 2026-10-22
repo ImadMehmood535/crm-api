@@ -19,6 +19,8 @@ export interface AuthUserReadModel {
   organization: OrganizationRef | null;
   mustResetPassword: boolean;
   permissions: string[];
+  /** owner | admin | department_head | member; null on the platform plane. */
+  level: string | null;
 }
 
 /** What the access policy needs next to the AuthUser. */

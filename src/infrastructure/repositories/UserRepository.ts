@@ -30,6 +30,7 @@ export class UserRepository implements IUserRepository {
         status: user.status,
         isSystem: false,
         createdBy: user.createdBy,
+        level: user.level,
       },
       { transaction },
     );
@@ -46,6 +47,7 @@ export class UserRepository implements IUserRepository {
         firstName: user.firstName,
         lastName: user.lastName,
         status: user.status,
+        level: user.level,
         deactivatedAt: user.status === 'active' ? null : new Date(),
       },
       { where: { id: user.id as string }, transaction: tx as Transaction },
@@ -140,6 +142,7 @@ export class UserRepository implements IUserRepository {
       row.lastName,
       row.status,
       row.createdBy,
+      row.level,
     );
   }
 }

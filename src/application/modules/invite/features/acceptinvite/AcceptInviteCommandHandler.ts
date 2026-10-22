@@ -80,6 +80,7 @@ export class AcceptInviteCommandHandler implements ICommandHandler<
           firstName: body.firstName ?? invite.firstName,
           lastName: body.lastName ?? invite.lastName,
           createdBy: null,
+          level: 'owner',
         }),
         passwordHash,
         false,

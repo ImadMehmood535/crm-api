@@ -22,6 +22,8 @@ export class AuthUserResponse {
   organization!: OrganizationRefResponse | null;
   @ApiProperty() mustResetPassword!: boolean;
   @ApiProperty({ type: [String], example: ['projects.view'] }) permissions!: string[];
+  @ApiProperty({ nullable: true, enum: ['owner', 'admin', 'department_head', 'member'] }) level!:
+    string | null;
 
   static from(user: AuthUserReadModel): AuthUserResponse {
     return Object.assign(new AuthUserResponse(), user);

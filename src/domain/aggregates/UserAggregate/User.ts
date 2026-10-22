@@ -1,6 +1,7 @@
 import { requiredText } from '@shared/domain/Guards';
 import { ValidationFailedError } from '@shared/errors/AppError';
 
+import { UserLevel } from './UserLevel';
 import { UserStatus } from './UserStatus';
 
 const NAME_MAX_LENGTH = 100;
@@ -20,6 +21,8 @@ export interface NewUserProps {
   firstName: string;
   lastName: string;
   createdBy: string | null;
+  /** Tenant users only; defaults to member. */
+  level?: UserLevel;
 }
 
 /** A person on either plane. organizationId null = platform operator. */
@@ -32,11 +35,14 @@ export class User {
     private _lastName: string,
     private _status: UserStatus,
     private readonly _createdBy: string | null,
+    private _level: UserLevel | null = null,
   ) {}
 
   /** A member of a company (its owner or staff). */
   static createTenantUser(organizationId: string, props: NewUserProps): User {
-    return User.createIn(organizationId, props);
+    const user = User.createIn(organizationId, props);
+    user._level = props.level ?? 'member';
+    return user;
   }
 
   static createPlatformAdmin(props: NewUserProps): User {
@@ -65,8 +71,9 @@ export class User {
     lastName: string,
     status: UserStatus,
     createdBy: string | null,
+    level: UserLevel | null = null,
   ): User {
-    return new User(id, organizationId, email, firstName, lastName, status, createdBy);
+    return new User(id, organizationId, email, firstName, lastName, status, createdBy, level);
   }
 
   get id(): string | null {
@@ -89,6 +96,13 @@ export class User {
   }
   get createdBy(): string | null {
     return this._createdBy;
+  }
+  get level(): UserLevel | null {
+    return this._level;
+  }
+
+  changeLevel(level: UserLevel): void {
+    this._level = level;
   }
 
   rename(firstName: string, lastName: string): void {

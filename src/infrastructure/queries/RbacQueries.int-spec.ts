@@ -8,6 +8,8 @@ import { TenantPersistenceModule } from '../persistence/TenantPersistenceModule'
 import { IRbacQueries, RBAC_QUERIES } from './abstraction/IRbacQueries';
 import { ITenantUserQueries, TENANT_USER_QUERIES } from './abstraction/ITenantUserQueries';
 
+const OWNER_VIEW = { userId: '00000000-0000-7000-8000-000000000000', level: 'owner' as const };
+
 describe('RbacQueries / TenantUserQueries', () => {
   let moduleRef: TestingModule;
   let sequelize: Sequelize;
@@ -44,6 +46,8 @@ describe('RbacQueries / TenantUserQueries', () => {
     expect(catalogue.map((m) => m.module)).toEqual([
       'users',
       'roles',
+      'departments',
+      'teams',
       'projects',
       'units',
       'branding',
@@ -58,7 +62,7 @@ describe('RbacQueries / TenantUserQueries', () => {
         { action: 'deactivate', label: 'Deactivate / reactivate users', code: 'users.deactivate' },
       ],
     });
-    expect(await rbac.allCodes()).toHaveLength(18);
+    expect(await rbac.allCodes()).toHaveLength(26);
   });
 
   it('should list active roles, system first, with permissions and holder counts', async () => {
@@ -80,7 +84,7 @@ describe('RbacQueries / TenantUserQueries', () => {
       ['developer_super_user', true, 1],
       ['sales', false, 1],
     ]);
-    expect(rows[0].permissions).toHaveLength(18);
+    expect(rows[0].permissions).toHaveLength(26);
     expect(rows[1].permissions).toEqual(['projects.view', 'users.view']);
     expect(
       (await rbac.findRoles({ organizationId: orgId, page: 1, pageSize: 20, search: 'SAL' })).total,
@@ -106,6 +110,7 @@ describe('RbacQueries / TenantUserQueries', () => {
     await createUser(sequelize, { email: 'x@example.com', organizationId: other });
 
     const { rows, total } = await tenantUsers.findList({
+      viewer: OWNER_VIEW,
       organizationId: orgId,
       page: 1,
       pageSize: 20,
@@ -116,7 +121,7 @@ describe('RbacQueries / TenantUserQueries', () => {
       [owner, true],
       [staff, false],
     ]);
-    expect(rows[0].permissions).toHaveLength(18);
+    expect(rows[0].permissions).toHaveLength(26);
     expect(rows[1]).toMatchObject({
       status: 'inactive',
       roles: [{ id: sales, name: 'sales', code: 'sales' }],
@@ -126,6 +131,7 @@ describe('RbacQueries / TenantUserQueries', () => {
     expect(
       (
         await tenantUsers.findList({
+          viewer: OWNER_VIEW,
           organizationId: orgId,
           page: 1,
           pageSize: 20,
@@ -136,6 +142,7 @@ describe('RbacQueries / TenantUserQueries', () => {
     expect(
       (
         await tenantUsers.findList({
+          viewer: OWNER_VIEW,
           organizationId: orgId,
           page: 1,
           pageSize: 20,
@@ -143,6 +150,6 @@ describe('RbacQueries / TenantUserQueries', () => {
         })
       ).total,
     ).toBe(1);
-    expect(await tenantUsers.findById(other, owner)).toBeNull();
+    expect(await tenantUsers.findById(other, owner, OWNER_VIEW)).toBeNull();
   });
 });

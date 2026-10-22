@@ -14,7 +14,7 @@ src() { grep -rnE "$1" "${@:2}" --include='*.ts' | grep -vE '\.(int-)?spec\.ts:'
 run 'R1 runtime deps allowlist' < <(node -e "
   const allowed = new Set(['@nestjs/common','@nestjs/config','@nestjs/core','@nestjs/cqrs',
     '@nestjs/platform-express','@nestjs/sequelize','@nestjs/swagger','class-transformer',
-    'class-validator','pg','reflect-metadata','rxjs','sequelize','sequelize-typescript']);
+    'class-validator','jsonwebtoken','pg','reflect-metadata','rxjs','sequelize','sequelize-typescript']);
   const extra = Object.keys(require('./package.json').dependencies || {}).filter((d) => !allowed.has(d));
   if (extra.length) console.log(extra.join('\n'));")
 run 'R2 shared is framework-free'      < <(src "from '(@nestjs|sequelize|@api|@application|@domain|@infrastructure)" src/shared)

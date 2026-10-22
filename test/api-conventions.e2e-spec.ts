@@ -15,6 +15,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 
 import { PageQuery } from '../src/api/common/PageQuery';
+import { Public } from '../src/api/common/Public';
 import { ParseUuidPipe } from '../src/api/pipes/ParseUuidPipe';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
@@ -42,6 +43,7 @@ class ProbeBody {
 const ROWS = Array.from({ length: 45 }, (_, i) => ({ n: i + 1 }));
 
 /** Test-only endpoints that exercise the shared HTTP conventions. */
+@Public()
 @Controller('probe')
 class ProbeController {
   @Post()

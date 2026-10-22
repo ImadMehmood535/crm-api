@@ -6,9 +6,11 @@ import { Response } from 'express';
 import { CheckHealthQuery } from '@application/modules/health/features/checkhealth/CheckHealthQuery';
 import { CheckHealthResponse } from '@application/modules/health/features/checkhealth/CheckHealthResponse';
 
+import { Public } from '../common/Public';
 import { RawResponse } from '../common/RawResponse';
 
 @ApiTags('Health')
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly queryBus: QueryBus) {}

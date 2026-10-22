@@ -3,7 +3,7 @@ const base = require('./jest.config');
 
 module.exports = {
   ...base,
-  testRegex: 'src/.*\\.int-spec\\.ts$',
+  testRegex: '(src|seeds)/.*\\.int-spec\\.ts$',
   globalSetup: '<rootDir>/test/setup/global-setup.ts',
   setupFiles: ['<rootDir>/test/setup/test-env.ts'],
 };

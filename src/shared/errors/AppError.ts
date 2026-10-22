@@ -77,3 +77,19 @@ export class ConflictError extends AppError {
     super(code, message, details);
   }
 }
+
+export class PayloadTooLargeError extends AppError {
+  readonly status = 413;
+
+  constructor(message: string) {
+    super('PAYLOAD_TOO_LARGE', message);
+  }
+}
+
+export class UnsupportedMediaTypeError extends AppError {
+  readonly status = 415;
+
+  constructor(message: string) {
+    super('UNSUPPORTED_MEDIA_TYPE', message);
+  }
+}

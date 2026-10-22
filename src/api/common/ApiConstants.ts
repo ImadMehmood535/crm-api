@@ -9,6 +9,8 @@ export const ApiRoute = {
   Permissions: 'permissions',
   Roles: 'roles',
   Users: 'users',
+  MyBranding: 'me/branding',
+  BrandingAssets: 'branding-assets',
 } as const;
 
 export const SwaggerTag = {
@@ -20,4 +22,5 @@ export const SwaggerTag = {
   PlatformInsights: 'Platform · Stats & audit',
   Roles: 'Tenant · Roles & permissions',
   Users: 'Tenant · Users',
+  Branding: 'Tenant · Branding',
 } as const;

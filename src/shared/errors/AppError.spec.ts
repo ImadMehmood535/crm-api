@@ -3,7 +3,9 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  PayloadTooLargeError,
   UnauthenticatedError,
+  UnsupportedMediaTypeError,
   ValidationFailedError,
 } from './AppError';
 
@@ -38,6 +40,8 @@ describe('AppError', () => {
     [new ForbiddenError('PERMISSION_DENIED', 'No.'), 403, 'PERMISSION_DENIED'],
     [new NotFoundError(), 404, 'NOT_FOUND'],
     [new ConflictError('SLUG_CONFLICT', 'Taken.'), 409, 'SLUG_CONFLICT'],
+    [new PayloadTooLargeError('Big.'), 413, 'PAYLOAD_TOO_LARGE'],
+    [new UnsupportedMediaTypeError('No.'), 415, 'UNSUPPORTED_MEDIA_TYPE'],
   ])('should map %p to its status and code', (error, status, code) => {
     expect(error.status).toBe(status);
     expect(error.code).toBe(code);

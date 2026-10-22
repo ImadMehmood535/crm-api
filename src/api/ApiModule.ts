@@ -8,8 +8,10 @@ import { HealthModule } from '@application/modules/health/HealthModule';
 import { InviteModule } from '@application/modules/invite/InviteModule';
 import { PlatformAdminModule } from '@application/modules/platformadmin/PlatformAdminModule';
 import { PlatformInsightsModule } from '@application/modules/platforminsights/PlatformInsightsModule';
+import { ProjectModule } from '@application/modules/project/ProjectModule';
 import { RbacModule } from '@application/modules/rbac/RbacModule';
 import { TenantUserModule } from '@application/modules/tenantuser/TenantUserModule';
+import { UnitModule } from '@application/modules/unit/UnitModule';
 
 import { AuthController } from './controllers/AuthController';
 import { BrandingAssetsController } from './controllers/BrandingAssetsController';
@@ -20,8 +22,10 @@ import { PlatformDevelopersController } from './controllers/PlatformDevelopersCo
 import { PlatformInsightsController } from './controllers/PlatformInsightsController';
 import { PlatformInvitesController } from './controllers/PlatformInvitesController';
 import { PermissionsController } from './controllers/PermissionsController';
+import { ProjectsController } from './controllers/ProjectsController';
 import { PublicInvitesController } from './controllers/PublicInvitesController';
 import { RolesController } from './controllers/RolesController';
+import { UnitsController } from './controllers/UnitsController';
 import { UsersController } from './controllers/UsersController';
 import { AuthGuard } from './guards/AuthGuard';
 import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
@@ -37,6 +41,8 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     RbacModule,
     TenantUserModule,
     BrandingModule,
+    ProjectModule,
+    UnitModule,
   ],
   controllers: [
     HealthController,
@@ -51,6 +57,8 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     UsersController,
     BrandingController,
     BrandingAssetsController,
+    ProjectsController,
+    UnitsController,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })

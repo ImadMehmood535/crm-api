@@ -24,12 +24,17 @@ export abstract class AppError extends Error {
 export class ValidationFailedError extends AppError {
   readonly status = 422;
 
-  constructor(details: readonly ErrorDetail[], message = 'Validation failed') {
-    super('VALIDATION_FAILED', message, details);
+  /** `code` lets a 422 carry a more specific contract code, e.g. SLUG_RESERVED. */
+  constructor(
+    details: readonly ErrorDetail[],
+    message = 'Validation failed',
+    code = 'VALIDATION_FAILED',
+  ) {
+    super(code, message, details);
   }
 
-  static forField(field: string, message: string): ValidationFailedError {
-    return new ValidationFailedError([{ field, messages: [message] }], message);
+  static forField(field: string, message: string, code?: string): ValidationFailedError {
+    return new ValidationFailedError([{ field, messages: [message] }], message, code);
   }
 }
 

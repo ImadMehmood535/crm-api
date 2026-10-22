@@ -54,6 +54,11 @@ export const rotatedSession = (): Session =>
 
 export function userRepository(): jest.Mocked<IUserRepository> {
   return {
+    save: jest.fn(),
+    update: jest.fn(),
+    assignRole: jest.fn(),
+    emailExists: jest.fn().mockResolvedValue(false),
+    countOtherActivePlatformSuperUsers: jest.fn(),
     findById: jest.fn(),
     findByEmail: jest.fn(),
     findCredential: jest.fn(),

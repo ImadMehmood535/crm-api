@@ -97,3 +97,36 @@ export async function createUser(sequelize: Sequelize, values: UserFixture): Pro
   }
   return id;
 }
+
+export async function createInvite(
+  sequelize: Sequelize,
+  values: {
+    invitedBy: string;
+    email?: string;
+    slug?: string;
+    status?: 'pending' | 'accepted' | 'revoked';
+    expiresAt?: Date;
+    tokenHash?: string;
+    createdAt?: Date;
+  },
+): Promise<string> {
+  const id = uuidv7();
+  await sequelize.query(
+    `INSERT INTO invites (id, email, first_name, last_name, organization_name, slug, token_hash, status,
+                          expires_at, invited_by, created_at)
+     VALUES (:id, :email, 'Ali', 'Raza', 'Harbor Homes', :slug, :tokenHash, :status, :expiresAt, :invitedBy, :createdAt)`,
+    {
+      replacements: {
+        id,
+        email: values.email ?? `invitee-${id.slice(-8)}@example.com`,
+        slug: values.slug ?? `harbor-${id.slice(-8)}`,
+        tokenHash: values.tokenHash ?? id.replace(/-/g, '').padEnd(64, '0'),
+        status: values.status ?? 'pending',
+        expiresAt: values.expiresAt ?? new Date(Date.now() + 7 * 86_400_000),
+        invitedBy: values.invitedBy,
+        createdAt: values.createdAt ?? new Date(),
+      },
+    },
+  );
+  return id;
+}

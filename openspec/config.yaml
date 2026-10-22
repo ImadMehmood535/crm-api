@@ -1,0 +1,51 @@
+schema: spec-driven
+
+# Project context — constraints for every OpenSpec artifact and workflow.
+context: |
+  Backend: CRM Developer API (NestJS 11, TypeScript).
+  ARCHITECTURE.md at the project root is the binding architecture. Read it before
+  writing design or tasks; it mirrors invespy-v2-feeds-microservice exactly.
+
+  Hard constraints:
+  - DDD + CQRS (@nestjs/cqrs) + Vertical Slice. One module per aggregate under
+    src/application/modules/<entity>/, one folder per use case under features/<featurename>/
+    containing its Command|Query, Handler, Request (if body) and Response.
+  - Layers: api (thin controllers, CommandBus/QueryBus only) → application (handlers)
+    → domain (aggregate <Entity>.ts with guarded methods + Sequelize <Entity>Model.ts)
+    → infrastructure (Repository = write side returning aggregates; Queries = read side
+    returning plain ReadModels; injected by Symbol token via I<Entity>Repository / I<Entity>Queries).
+  - Persistence: Sequelize (sequelize-typescript) on PostgreSQL only. Tables extend BaseModel
+    (id BIGINT, globalUId UUID, createdAt, modifiedOn) with timestamps: false; audit fields are
+    set only by the global AuditHook. Schema via synchronize: true (no migration tool).
+  - Every aggregate has entityStatus (ACTIVE | INACTIVE | DRAFT) and an auto-generated unique slug.
+  - Validation lives in aggregates via shared Guards and throws DomainError (400);
+    handlers throw NotFoundError (404) and ConflictError (409); DomainExceptionFilter maps them.
+    No class-validator, no Nest HttpExceptions in application/domain.
+  - NO third-party services or SDKs: no file storage, email/SMS, queues, external auth,
+    caches, logging or validation libraries. Runtime deps limited to NestJS, @nestjs/cqrs,
+    @nestjs/config, @nestjs/swagger, @nestjs/sequelize, sequelize, sequelize-typescript, pg.
+  - Every endpoint and DTO property is documented with Swagger decorators.
+
+rules:
+  design:
+    - Map the change onto the layers and folders in ARCHITECTURE.md; name every new file with its full path.
+    - For each aggregate list its fields with types, max lengths, nullability, relations and delete rules (RESTRICT + ConflictError).
+    - Separate write-side (repository) and read-side (queries) methods explicitly.
+    - Do not introduce any third-party service or new runtime dependency.
+  tasks:
+    - Order tasks by layer as in ARCHITECTURE.md section 11 (domain → infrastructure → application slices → api → verify).
+    - One task per vertical slice (feature folder), naming its Command/Query, Handler, Request and Response files.
+    - Include registration tasks (TableNames, DatabaseModule models, PersistenceModule, <Entity>Module, ApiModule, ApiConstants).
+    - End with verification - npm run build and exercising all endpoints including 400/404/409 paths.
+    - Include test tasks per ARCHITECTURE.md section 17.3 (aggregate unit, handler unit, repository/queries integration, e2e).
+    - Final task runs the section 18.4 pre-flight and fills the section 19.5 scorecard.
+  specs:
+    - Write requirements as API behaviour (endpoint, input, response, error codes), not implementation details.
+
+operations:
+  apply:
+    guidance:
+      - Follow ARCHITECTURE.md templates and naming exactly; copy patterns from it rather than inventing new ones.
+      - Use path aliases (@api, @application, @domain, @infrastructure, @shared) across layers; relative imports only inside a slice.
+      - Follow coding practices (section 15) and hard rules (section 16.1); run npm run check:boundaries before finishing.
+      - Write tests alongside each slice per section 17; never mock aggregates or Guards.

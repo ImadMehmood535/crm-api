@@ -3,7 +3,7 @@ const base = require('./jest.config');
 
 module.exports = {
   ...base,
-  testRegex: '(src/.*\\.(int-)?spec|test/.*\\.e2e-spec)\\.ts$',
+  testRegex: '((src|seeds)/.*\\.(int-)?spec|test/.*\\.e2e-spec)\\.ts$',
   globalSetup: '<rootDir>/test/setup/global-setup.ts',
   setupFiles: ['<rootDir>/test/setup/test-env.ts'],
   collectCoverageFrom: [

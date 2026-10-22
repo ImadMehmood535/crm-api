@@ -60,6 +60,8 @@ export function userRepository(): jest.Mocked<IUserRepository> {
     emailExists: jest.fn().mockResolvedValue(false),
     countOtherActivePlatformSuperUsers: jest.fn(),
     findById: jest.fn(),
+    findTenantUser: jest.fn(),
+    replaceRoles: jest.fn(),
     findByEmail: jest.fn(),
     findCredential: jest.fn(),
     setPassword: jest.fn(),

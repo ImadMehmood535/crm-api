@@ -75,7 +75,7 @@ export class AcceptInviteCommandHandler implements ICommandHandler<
       const organizationId = organization.id as string;
       const roleId = await this.roles.createOwnerRole(organizationId, tx);
       const owner = await this.users.save(
-        User.createTenantOwner(organizationId, {
+        User.createTenantUser(organizationId, {
           email: invite.email,
           firstName: body.firstName ?? invite.firstName,
           lastName: body.lastName ?? invite.lastName,

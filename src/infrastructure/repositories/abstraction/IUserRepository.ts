@@ -18,6 +18,14 @@ export interface IUserRepository {
   /** Active platform super users other than `exceptUserId`. */
   countOtherActivePlatformSuperUsers(exceptUserId: string): Promise<number>;
   findById(id: string): Promise<User | null>;
+  /** A user of this company only (another company's user is "not found"). */
+  findTenantUser(organizationId: string, id: string): Promise<User | null>;
+  replaceRoles(
+    userId: string,
+    roleIds: readonly string[],
+    assignedBy: string,
+    tx?: Tx,
+  ): Promise<void>;
   findByEmail(email: string): Promise<User | null>;
   findCredential(userId: string): Promise<Credential | null>;
   setPassword(userId: string, passwordHash: string, mustReset: boolean, tx?: Tx): Promise<void>;

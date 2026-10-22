@@ -13,7 +13,8 @@ export interface NewSession {
   readonly userAgent: string | null;
 }
 
-export type RevokeReason = 'logout' | 'refresh_reuse' | 'password_changed';
+export type RevokeReason =
+  'logout' | 'refresh_reuse' | 'password_changed' | 'password_reset' | 'account_deactivated';
 
 export interface ISessionRepository {
   create(session: NewSession, tx?: Tx): Promise<Session>;

@@ -130,3 +130,13 @@ export async function createInvite(
   );
   return id;
 }
+
+/** Grants catalogue codes to a role (the catalogue is seeded by the global setup). */
+export async function grant(sequelize: Sequelize, roleId: string, codes: string[]): Promise<void> {
+  for (const code of codes) {
+    await sequelize.query(
+      'INSERT INTO role_permissions (role_id, permission_id) SELECT :roleId, id FROM permissions WHERE code = :code',
+      { replacements: { roleId, code } },
+    );
+  }
+}

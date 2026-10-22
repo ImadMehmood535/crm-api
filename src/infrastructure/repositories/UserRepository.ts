@@ -84,6 +84,25 @@ export class UserRepository implements IUserRepository {
     return row ? this.toDomain(row) : null;
   }
 
+  async findTenantUser(organizationId: string, id: string): Promise<User | null> {
+    const row = await this.userModel.findOne({ where: { organizationId, id } });
+    return row ? this.toDomain(row) : null;
+  }
+
+  async replaceRoles(
+    userId: string,
+    roleIds: readonly string[],
+    assignedBy: string,
+    tx?: Tx,
+  ): Promise<void> {
+    const transaction = tx as Transaction;
+    await this.userRoleModel.destroy({ where: { userId }, transaction });
+    await this.userRoleModel.bulkCreate(
+      roleIds.map((roleId) => ({ userId, roleId, assignedBy, assignedAt: new Date() })),
+      { transaction },
+    );
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.userModel.findOne({ where: { email: email.trim().toLowerCase() } });
     return row ? this.toDomain(row) : null;

@@ -10,9 +10,9 @@ const props = {
 };
 
 describe('User', () => {
-  describe('createTenantOwner', () => {
+  describe('createTenantUser', () => {
     it('should create an active tenant user with a normalised email and trimmed names', () => {
-      const user = User.createTenantOwner('org-1', props);
+      const user = User.createTenantUser('org-1', props);
 
       expect(user.id).toBeNull();
       expect(user.organizationId).toBe('org-1');

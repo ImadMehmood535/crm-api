@@ -7,6 +7,8 @@ import { HealthModule } from '@application/modules/health/HealthModule';
 import { InviteModule } from '@application/modules/invite/InviteModule';
 import { PlatformAdminModule } from '@application/modules/platformadmin/PlatformAdminModule';
 import { PlatformInsightsModule } from '@application/modules/platforminsights/PlatformInsightsModule';
+import { RbacModule } from '@application/modules/rbac/RbacModule';
+import { TenantUserModule } from '@application/modules/tenantuser/TenantUserModule';
 
 import { AuthController } from './controllers/AuthController';
 import { HealthController } from './controllers/HealthController';
@@ -14,7 +16,10 @@ import { PlatformAdminsController } from './controllers/PlatformAdminsController
 import { PlatformDevelopersController } from './controllers/PlatformDevelopersController';
 import { PlatformInsightsController } from './controllers/PlatformInsightsController';
 import { PlatformInvitesController } from './controllers/PlatformInvitesController';
+import { PermissionsController } from './controllers/PermissionsController';
 import { PublicInvitesController } from './controllers/PublicInvitesController';
+import { RolesController } from './controllers/RolesController';
+import { UsersController } from './controllers/UsersController';
 import { AuthGuard } from './guards/AuthGuard';
 import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
 
@@ -26,6 +31,8 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     InviteModule,
     PlatformAdminModule,
     PlatformInsightsModule,
+    RbacModule,
+    TenantUserModule,
   ],
   controllers: [
     HealthController,
@@ -35,6 +42,9 @@ import { RequestLoggerMiddleware } from './middleware/RequestLoggerMiddleware';
     PublicInvitesController,
     PlatformAdminsController,
     PlatformInsightsController,
+    PermissionsController,
+    RolesController,
+    UsersController,
   ],
   providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
 })

@@ -4,6 +4,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { InviteModel } from '@domain/aggregates/InviteAggregate/InviteModel';
 import { OrganizationModel } from '@domain/aggregates/OrganizationAggregate/OrganizationModel';
 import { RoleModel } from '@domain/aggregates/RoleAggregate/RoleModel';
+import { RolePermissionModel } from '@domain/aggregates/RoleAggregate/RolePermissionModel';
 import { UserCredentialModel } from '@domain/aggregates/UserAggregate/UserCredentialModel';
 import { UserModel } from '@domain/aggregates/UserAggregate/UserModel';
 import { UserRoleModel } from '@domain/aggregates/UserAggregate/UserRoleModel';
@@ -36,6 +37,7 @@ import { AuthPersistenceModule } from './AuthPersistenceModule';
       UserCredentialModel,
       UserRoleModel,
       RoleModel,
+      RolePermissionModel,
       InviteModel,
     ]),
   ],

@@ -54,7 +54,7 @@ export class DeactivatePlatformAdminCommandHandler implements ICommandHandler<
     user.deactivate();
     await this.unitOfWork.run(async (tx) => {
       await this.users.update(user, tx);
-      await this.sessions.revokeAllForUser(command.id, 'logout', tx);
+      await this.sessions.revokeAllForUser(command.id, 'account_deactivated', tx);
       await this.audit.record(
         {
           actorUserId: command.actor.userId,

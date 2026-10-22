@@ -1,0 +1,73 @@
+import { Inject } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+
+import { newTemporaryPassword } from '@shared/utils/TemporaryPassword';
+import { AUDIT_LOG, IAuditLog } from '@infrastructure/audit/abstraction/IAuditLog';
+import { IUnitOfWork, UNIT_OF_WORK } from '@infrastructure/persistence/abstraction/IUnitOfWork';
+import {
+  ITenantUserQueries,
+  TENANT_USER_QUERIES,
+} from '@infrastructure/queries/abstraction/ITenantUserQueries';
+import {
+  ISessionRepository,
+  SESSION_REPOSITORY,
+} from '@infrastructure/repositories/abstraction/ISessionRepository';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from '@infrastructure/repositories/abstraction/IUserRepository';
+import {
+  IPasswordHasher,
+  PASSWORD_HASHER,
+} from '@infrastructure/security/abstraction/IPasswordHasher';
+import { requirePermission } from '@application/common/Authorization';
+
+import { TenantUserWithPasswordResponse } from '../gettenantuser/TenantUserResponse';
+import { assertCanManage, forbiddenOperation, userNotFound } from '../../TenantUserRules';
+import { ResetTenantUserPasswordCommand } from './ResetTenantUserPasswordCommand';
+
+/** A new one-time password; the user must change it, and their sessions end. */
+@CommandHandler(ResetTenantUserPasswordCommand)
+export class ResetTenantUserPasswordCommandHandler implements ICommandHandler<
+  ResetTenantUserPasswordCommand,
+  TenantUserWithPasswordResponse
+> {
+  constructor(
+    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
+    @Inject(SESSION_REPOSITORY) private readonly sessions: ISessionRepository,
+    @Inject(TENANT_USER_QUERIES) private readonly tenantUsers: ITenantUserQueries,
+    @Inject(PASSWORD_HASHER) private readonly hasher: IPasswordHasher,
+    @Inject(AUDIT_LOG) private readonly audit: IAuditLog,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: IUnitOfWork,
+  ) {}
+
+  async execute(command: ResetTenantUserPasswordCommand): Promise<TenantUserWithPasswordResponse> {
+    const { actor } = command;
+    const organizationId = requirePermission(actor, 'users.edit');
+    const target = await this.tenantUsers.findById(organizationId, command.id);
+    if (!target) throw userNotFound();
+    if (command.id === actor.userId) {
+      throw forbiddenOperation('Use "change password" for your own account.');
+    }
+    assertCanManage(actor, target);
+
+    const temporaryPassword = newTemporaryPassword();
+    const passwordHash = await this.hasher.hash(temporaryPassword);
+    await this.unitOfWork.run(async (tx) => {
+      await this.users.setPassword(command.id, passwordHash, true, tx);
+      await this.sessions.revokeAllForUser(command.id, 'password_reset', tx);
+      await this.audit.record(
+        {
+          actorUserId: actor.userId,
+          action: 'user.password_reset',
+          entityType: 'user',
+          entityId: command.id,
+          organizationId,
+          ip: command.meta.ipAddress,
+        },
+        tx,
+      );
+    });
+    return TenantUserWithPasswordResponse.of(target, temporaryPassword);
+  }
+}

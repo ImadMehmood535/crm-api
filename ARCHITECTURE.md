@@ -56,7 +56,7 @@ crm-developer-api/
     │
     ├── api/                     # HTTP edge (thin)
     │   ├── ApiModule.ts
-    │   ├── common/              # ApiConstants, PageQuery, RawResponse, CurrentActor, auth decorators
+    │   ├── common/              # ApiConstants, RawResponse, CurrentActor, ClientMeta, auth decorators
     │   ├── controllers/<Entity>Controller.ts
     │   ├── filters/AllExceptionsFilter.ts
     │   ├── interceptors/EnvelopeInterceptor.ts
@@ -64,6 +64,7 @@ crm-developer-api/
     │   └── pipes/{ParseUuidPipe,createValidationPipe}.ts
     │
     ├── application/             # vertical slices (CQRS)
+    │   ├── common/              # PageQuery, Authorization (plane / permission checks)
     │   └── modules/<entity>/
     │       ├── <Entity>Module.ts
     │       └── features/<featurename>/
@@ -226,7 +227,7 @@ Codes are part of the frontend contract. Use the exact code the contract names.
 - Path ids go through `ParseUuidPipe`: a malformed id is a 404, the same as an unknown one.
 
 ### 4.5 Pagination
-List query DTOs extend `PageQuery` (`page` ≥ 1, default 1; `pageSize` 1–100, default 20). The
+List query DTOs extend `PageQuery` (`@application/common/PageQuery`) (`page` ≥ 1, default 1; `pageSize` 1–100, default 20). The
 handler returns `PagedResult.of(items, query, total)`. The repository or queries class uses
 `limit: pageSize, offset: offsetOf(query)`.
 
@@ -860,7 +861,8 @@ Never use `../../` inside `src/`.
 - Read models expose dates as ISO strings (`toISOString()`), and `date` columns as `YYYY-MM-DD`.
 - Lists always have `order`, `limit` and `offset`.
 - **No queries inside loops.** Load related data with `include` or a single `IN` query.
-- Never build raw SQL by string concatenation. When raw SQL is needed (stats, aggregates), use
+- Never build raw SQL from input. When raw SQL is needed (stats, aggregates, joins), declare it as a
+  module-level constant (constant fragments may be composed) and pass every value through
   `replacements`.
 - Multi-table writes go through `IUnitOfWork`.
 
@@ -896,13 +898,13 @@ Breaking any hard rule blocks the PR, whatever its score (§19.1).
 | R1  | Runtime `dependencies` come only from the allowlist in `scripts/check-boundaries.sh` | yes |
 | R2  | `shared/` imports nothing outside `shared/`: no Nest, no Sequelize, no other layer | yes |
 | R3  | Domain aggregates (`<Entity>.ts`) import only `@shared/*` | yes |
-| R4  | `application/` never imports concrete repositories or queries, Models or `sequelize` | yes |
+| R4  | `application/` never imports `@api`, concrete repositories or queries, Models or `sequelize` | yes |
 | R5  | `api/` never imports `@infrastructure`, `@domain` or `sequelize` | yes |
 | R6  | No Nest `HttpException` (or subclasses) is thrown by our code | yes |
 | R7  | Repositories never set `createdAt` / `updatedAt` | yes |
 | R8  | `synchronize` is never enabled, and `sync()` is never called | yes |
 | R9  | Handlers never inject `CommandBus` / `QueryBus` (no cross-module handler calls) | yes |
-| R10 | No raw SQL built by string interpolation (`` query(`…${…}`) ``) | yes |
+| R10 | Raw SQL is a module-level constant built only from constant fragments; values go through `replacements`, never `query(`…${…}`)` | yes |
 | R11 | No `console.*` in `src/` or `seeds/` | yes |
 | R12 | No `.env` file or secret is committed | yes |
 | R13 | Repositories, queries, handlers and controllers never return Sequelize Models | review |

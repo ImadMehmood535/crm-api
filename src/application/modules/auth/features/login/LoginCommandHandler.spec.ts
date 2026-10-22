@@ -19,7 +19,7 @@ describe('LoginCommandHandler', () => {
   const setup = (found = account()) => {
     const users = userRepository();
     users.findByEmail.mockResolvedValue(
-      User.rehydrate('user-1', 'org-1', 'owner@example.com', 'active'),
+      User.rehydrate('user-1', 'org-1', 'owner@example.com', 'Sara', 'Khan', 'active', null),
     );
     users.findCredential.mockResolvedValue({ passwordHash: 'stored', mustResetPassword: false });
     const hasher = passwordHasher();

@@ -24,6 +24,14 @@ describe('AppError', () => {
     expect(error.details).toEqual([{ field: 'name', messages: ['Name is required.'] }]);
   });
 
+  it('should let a 422 carry a specific code and keep the field detail', () => {
+    const error = ValidationFailedError.forField('slug', 'This slug is reserved.', 'SLUG_RESERVED');
+
+    expect(error.status).toBe(422);
+    expect(error.code).toBe('SLUG_RESERVED');
+    expect(error.details).toEqual([{ field: 'slug', messages: ['This slug is reserved.'] }]);
+  });
+
   it.each([
     [new BadRequestError(), 400, 'BAD_REQUEST'],
     [new UnauthenticatedError(), 401, 'UNAUTHENTICATED'],

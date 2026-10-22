@@ -35,17 +35,18 @@ export class LoginCommandHandler implements ICommandHandler<LoginCommand, AuthSe
       await this.hasher.dummyVerify(command.password); // same latency as a wrong password
       throw invalidCredentials();
     }
-    const credential = await this.users.findCredential(user.id);
+    const userId = user.id as string; // loaded users always have an id
+    const credential = await this.users.findCredential(userId);
     if (!credential || !(await this.hasher.verify(command.password, credential.passwordHash))) {
       throw invalidCredentials();
     }
-    const account = await this.authQueries.findAccount(user.id);
+    const account = await this.authQueries.findAccount(userId);
     if (!account) throw invalidCredentials();
     // Only now, after a correct password, may the account's state be revealed.
     assertCanAuthenticate(account.userStatus, account.organizationStatus);
 
     const session = await this.sessionIssuer.start(account.user, command.meta);
-    await this.users.markLoggedIn(user.id);
+    await this.users.markLoggedIn(userId);
     return session;
   }
 }

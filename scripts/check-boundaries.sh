@@ -19,7 +19,7 @@ run 'R1 runtime deps allowlist' < <(node -e "
   if (extra.length) console.log(extra.join('\n'));")
 run 'R2 shared is framework-free'      < <(src "from '(@nestjs|sequelize|@api|@application|@domain|@infrastructure)" src/shared)
 run 'R3 aggregates are pure'           < <(src "from '(@nestjs|sequelize|@api|@application|@infrastructure)" src/domain | grep -v 'Model.ts:')
-run 'R4 application uses abstractions' < <(src "from '(@infrastructure/(repositories|queries)/[A-Z]|@domain/aggregates/.*Model'|sequelize)" src/application)
+run 'R4 application uses abstractions' < <(src "from '(@api/|@infrastructure/(repositories|queries)/[A-Z]|@domain/aggregates/.*Model'|sequelize)" src/application)
 run 'R5 api talks to buses only'       < <(src "from '(@infrastructure/|@domain/|sequelize)" src/api)
 run 'R6 no HttpException thrown'       < <(src "throw new [A-Za-z]*(HttpException|Exception)\(" src)
 run 'R7 timestamps untouched'          < <(src "(createdAt|updatedAt)\s*:" src/infrastructure/repositories 2>/dev/null)

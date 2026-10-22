@@ -14,7 +14,7 @@ import { IsEmail, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
-import { PageQuery } from '../src/api/common/PageQuery';
+import { PageQuery } from '../src/application/common/PageQuery';
 import { Public } from '../src/api/common/Public';
 import { ParseUuidPipe } from '../src/api/pipes/ParseUuidPipe';
 import { AppModule } from '../src/app.module';

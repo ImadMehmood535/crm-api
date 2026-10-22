@@ -19,6 +19,8 @@ const ORGANIZATION_COUNTS_SQL = `
 
 const TENANT_USERS_SQL =
   'SELECT count(*)::int AS total FROM users WHERE organization_id IS NOT NULL';
+const PROJECTS_SQL = 'SELECT count(*)::int AS total FROM projects';
+const UNITS_SQL = 'SELECT count(*)::int AS total FROM units';
 
 // date_trunc('week') starts weeks on Monday (ISO).
 const TRENDS_SQL = `
@@ -55,12 +57,14 @@ export class PlatformStatsQueries implements IPlatformStatsQueries {
 
   async getStats(weeks: number): Promise<PlatformStatsReadModel> {
     const select = { type: QueryTypes.SELECT } as const;
-    const [[organizations], [users], trends, activity] = await Promise.all([
+    const [[organizations], [users], [projects], [units], trends, activity] = await Promise.all([
       this.sequelize.query<{ total: number; active: number; suspended: number }>(
         ORGANIZATION_COUNTS_SQL,
         select,
       ),
       this.sequelize.query<{ total: number }>(TENANT_USERS_SQL, select),
+      this.sequelize.query<{ total: number }>(PROJECTS_SQL, select),
+      this.sequelize.query<{ total: number }>(UNITS_SQL, select),
       this.sequelize.query<{ week_start: string; new_organizations: number; new_users: number }>(
         TRENDS_SQL,
         {
@@ -80,9 +84,8 @@ export class PlatformStatsQueries implements IPlatformStatsQueries {
       counts: {
         organizations,
         users,
-        // TODO(projects-and-units): count real projects and units.
-        projects: { total: 0 },
-        units: { total: 0 },
+        projects,
+        units,
       },
       recentActivity: activity.map((row) => ({
         type: ACTIVITY_TYPE[row.action],

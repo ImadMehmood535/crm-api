@@ -22,7 +22,13 @@ export type AuditAction =
   | 'user.password_reset'
   | 'branding.updated'
   | 'branding.asset_uploaded'
-  | 'branding.asset_removed';
+  | 'branding.asset_removed'
+  | 'project.created'
+  | 'project.updated'
+  | 'project.deleted'
+  | 'unit.created'
+  | 'unit.updated'
+  | 'unit.deleted';
 
 export interface AuditEntry {
   readonly actorUserId: string | null;

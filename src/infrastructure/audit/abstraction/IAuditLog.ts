@@ -11,7 +11,15 @@ export type AuditAction =
   | 'invite.revoked'
   | 'invite.accepted'
   | 'platform_admin.created'
-  | 'platform_admin.deactivated';
+  | 'platform_admin.deactivated'
+  | 'role.created'
+  | 'role.updated'
+  | 'role.deactivated'
+  | 'user.created'
+  | 'user.updated'
+  | 'user.activated'
+  | 'user.deactivated'
+  | 'user.password_reset';
 
 export interface AuditEntry {
   readonly actorUserId: string | null;

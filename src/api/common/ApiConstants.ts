@@ -6,6 +6,9 @@ export const ApiRoute = {
   PublicInvites: 'public/invites',
   PlatformAdmins: 'platform/admins',
   Platform: 'platform',
+  Permissions: 'permissions',
+  Roles: 'roles',
+  Users: 'users',
 } as const;
 
 export const SwaggerTag = {
@@ -15,4 +18,6 @@ export const SwaggerTag = {
   PublicInvites: 'Public · Invites',
   PlatformAdmins: 'Platform · Admins',
   PlatformInsights: 'Platform · Stats & audit',
+  Roles: 'Tenant · Roles & permissions',
+  Users: 'Tenant · Users',
 } as const;

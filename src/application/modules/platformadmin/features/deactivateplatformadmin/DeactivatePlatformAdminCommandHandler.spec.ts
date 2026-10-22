@@ -38,7 +38,7 @@ describe('DeactivatePlatformAdminCommandHandler', () => {
     await handler.execute(new DeactivatePlatformAdminCommand(platformSuper, 'admin-1', META));
 
     expect(users.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'inactive' }), {});
-    expect(sessions.revokeAllForUser).toHaveBeenCalledWith('admin-1', 'logout', {});
+    expect(sessions.revokeAllForUser).toHaveBeenCalledWith('admin-1', 'account_deactivated', {});
     expect(audit.record).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'platform_admin.deactivated' }),
       {},

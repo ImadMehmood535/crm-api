@@ -19,3 +19,27 @@ export function requirePlatformSuperUser(actor: Actor): void {
     throw permissionDenied('Only a platform super user can do this.');
   }
 }
+
+/** Tenant workspace endpoints: the caller's company id (never taken from the request). */
+export function requireTenant(actor: Actor): string {
+  if (actor.plane !== 'tenant' || !actor.organizationId) throw permissionDenied();
+  return actor.organizationId;
+}
+
+/** Tenant endpoint guarded by one `module.action` permission; returns the caller's company id. */
+export function requirePermission(actor: Actor, code: string): string {
+  const organizationId = requireTenant(actor);
+  if (!actor.permissions.includes(code)) throw permissionDenied();
+  return organizationId;
+}
+
+/** Nobody grants, or manages someone holding, a permission they do not hold themselves. */
+export function assertHoldsAll(
+  actor: Actor,
+  codes: readonly string[],
+  message = 'You cannot grant or manage permissions you do not hold yourself.',
+): void {
+  if (codes.some((code) => !actor.permissions.includes(code))) {
+    throw new ForbiddenError('PERMISSION_ESCALATION', message);
+  }
+}

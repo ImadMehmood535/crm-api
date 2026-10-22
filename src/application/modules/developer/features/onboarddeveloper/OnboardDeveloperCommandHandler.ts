@@ -78,7 +78,7 @@ export class OnboardDeveloperCommandHandler implements ICommandHandler<
       const id = saved.id as string;
       const roleId = await this.roles.createOwnerRole(id, tx);
       const owner = await this.users.save(
-        User.createTenantOwner(id, { ...command.owner, email, createdBy: actor.userId }),
+        User.createTenantUser(id, { ...command.owner, email, createdBy: actor.userId }),
         passwordHash,
         true,
         tx,

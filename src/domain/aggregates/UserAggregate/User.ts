@@ -34,8 +34,8 @@ export class User {
     private readonly _createdBy: string | null,
   ) {}
 
-  /** The developer super user of a company. */
-  static createTenantOwner(organizationId: string, props: NewUserProps): User {
+  /** A member of a company (its owner or staff). */
+  static createTenantUser(organizationId: string, props: NewUserProps): User {
     return User.createIn(organizationId, props);
   }
 

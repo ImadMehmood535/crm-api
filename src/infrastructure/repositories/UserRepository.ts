@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { QueryTypes, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 import { User } from '@domain/aggregates/UserAggregate/User';
 import { UserCredentialModel } from '@domain/aggregates/UserAggregate/UserCredentialModel';
@@ -10,9 +11,15 @@ import { UserRoleModel } from '@domain/aggregates/UserAggregate/UserRoleModel';
 import { Tx } from '@infrastructure/persistence/abstraction/IUnitOfWork';
 import { Credential, IUserRepository } from './abstraction/IUserRepository';
 
+const DELETE_OVERRIDES_SQL = 'DELETE FROM user_permission_overrides WHERE user_id = :userId';
+const INSERT_OVERRIDES_SQL = `
+  INSERT INTO user_permission_overrides (user_id, permission_id, effect, set_by)
+  SELECT :userId, p.id, :effect, :setBy FROM permissions p WHERE p.code IN (:codes)`;
+
 @Injectable()
 export class UserRepository implements IUserRepository {
   constructor(
+    @InjectConnection() private readonly sequelize: Sequelize,
     @InjectModel(UserModel) private readonly userModel: typeof UserModel,
     @InjectModel(UserCredentialModel)
     private readonly credentialModel: typeof UserCredentialModel,
@@ -103,6 +110,27 @@ export class UserRepository implements IUserRepository {
       roleIds.map((roleId) => ({ userId, roleId, assignedBy, assignedAt: new Date() })),
       { transaction },
     );
+  }
+
+  async replacePermissionOverrides(
+    userId: string,
+    grants: readonly string[],
+    revokes: readonly string[],
+    setBy: string,
+    tx?: Tx,
+  ): Promise<void> {
+    const transaction = tx as Transaction;
+    await this.sequelize.query(DELETE_OVERRIDES_SQL, { replacements: { userId }, transaction });
+    for (const [effect, codes] of [
+      ['grant', grants],
+      ['revoke', revokes],
+    ] as const) {
+      if (codes.length === 0) continue;
+      await this.sequelize.query(INSERT_OVERRIDES_SQL, {
+        replacements: { userId, effect, codes, setBy },
+        transaction,
+      });
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {

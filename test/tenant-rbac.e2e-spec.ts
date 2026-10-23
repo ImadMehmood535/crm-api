@@ -25,7 +25,7 @@ describe('Tenant RBAC (e2e)', () => {
   let owner: string;
 
   const http = () => request(app.getHttpServer());
-  const as = (token: string, method: 'get' | 'post' | 'patch' | 'delete', url: string) =>
+  const as = (token: string, method: 'get' | 'post' | 'put' | 'patch' | 'delete', url: string) =>
     http()
       [method](url)
       .set(...bearer(token));
@@ -465,6 +465,65 @@ describe('Tenant RBAC (e2e)', () => {
         (await as(owner, 'post', `/api/v1/users/${ownerId}/reset-password`).expect(403)).body.error
           .code,
       ).toBe('FORBIDDEN_OPERATION');
+    });
+  });
+
+  describe('per-user permission overrides', () => {
+    it('should grant and revoke on top of the role, reflect it on sign-in, and reset', async () => {
+      const sales = await staffWith('pp@skyline.example.com', ['projects.view', 'units.view']);
+
+      const set = await as(owner, 'put', `/api/v1/users/${sales.id}/permissions`)
+        .send({ permissions: ['projects.view', 'projects.edit'] })
+        .expect(200);
+      expect(set.body.data).toEqual({
+        rolePermissions: ['projects.view', 'units.view'],
+        granted: ['projects.edit'],
+        revoked: ['units.view'],
+        permissions: ['projects.edit', 'projects.view'],
+      });
+      const me = await as(sales.token, 'get', '/api/v1/auth/me').expect(200);
+      expect(me.body.data.permissions).toEqual(['projects.edit', 'projects.view']);
+
+      await as(owner, 'put', `/api/v1/users/${sales.id}/permissions`)
+        .send({ permissions: ['projects.view', 'units.view'] })
+        .expect(200);
+      const read = await as(owner, 'get', `/api/v1/users/${sales.id}/permissions`).expect(200);
+      expect(read.body.data).toMatchObject({ granted: [], revoked: [] });
+    });
+
+    it('should refuse the owner, yourself, unknown codes and escalation', async () => {
+      const editor = await staffWith(
+        'ed@skyline.example.com',
+        ['users.view', 'users.edit', 'projects.view'],
+        'admin',
+      );
+      const target = await staffWith('tg@skyline.example.com', ['projects.view']);
+
+      expect(
+        (
+          await as(owner, 'put', `/api/v1/users/${ownerId}/permissions`)
+            .send({ permissions: [] })
+            .expect(403)
+        ).body.error.code,
+      ).toBe('FORBIDDEN_OPERATION');
+      expect(
+        (
+          await as(editor.token, 'put', `/api/v1/users/${editor.id}/permissions`)
+            .send({ permissions: [] })
+            .expect(403)
+        ).body.error.code,
+      ).toBe('FORBIDDEN_OPERATION');
+      const unknown = await as(owner, 'put', `/api/v1/users/${target.id}/permissions`)
+        .send({ permissions: ['ships.sail'] })
+        .expect(422);
+      expect(unknown.body.error.details[0].field).toBe('permissions');
+      expect(
+        (
+          await as(editor.token, 'put', `/api/v1/users/${target.id}/permissions`)
+            .send({ permissions: ['projects.delete'] })
+            .expect(403)
+        ).body.error.code,
+      ).toBe('PERMISSION_ESCALATION');
     });
   });
 });

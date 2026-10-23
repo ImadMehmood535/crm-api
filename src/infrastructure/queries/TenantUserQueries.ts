@@ -7,11 +7,16 @@ import { offsetOf } from '@shared/utils/Pagination';
 
 import {
   ITenantUserQueries,
+  PermissionBreakdownReadModel,
   TenantUserListFilter,
   TenantUserReadModel,
   Viewer,
 } from './abstraction/ITenantUserQueries';
-import { effectivePermissionsSql } from './EffectivePermissionsSql';
+import {
+  effectivePermissionsSql,
+  overrideCodesSql,
+  rolePermissionsSql,
+} from './EffectivePermissionsSql';
 import { containsPattern, searchOrNull } from './SqlText';
 import { VISIBLE_USERS_CTE, effectiveLevelSql } from './VisibilitySql';
 
@@ -53,6 +58,14 @@ const viewerReplacements = (viewer: Viewer): Record<string, string> => ({
   viewerId: viewer.userId,
   viewerLevel: viewer.level,
 });
+
+const codesOf = (sql: string): string =>
+  `(SELECT coalesce(array_agg(code ORDER BY code), '{}') FROM (${sql}) x)`;
+const BREAKDOWN_SQL = `
+  SELECT ${codesOf(rolePermissionsSql(':userId'))} AS role_permissions,
+         ${codesOf(overrideCodesSql(':userId', 'grant'))} AS granted,
+         ${codesOf(overrideCodesSql(':userId', 'revoke'))} AS revoked,
+         ${codesOf(effectivePermissionsSql(':userId'))} AS permissions`;
 
 interface Row {
   id: string;
@@ -96,6 +109,21 @@ export class TenantUserQueries implements ITenantUserQueries {
       type: QueryTypes.SELECT,
     });
     return { rows: rows.map(toReadModel), total };
+  }
+
+  async findPermissionBreakdown(userId: string): Promise<PermissionBreakdownReadModel> {
+    const [row] = await this.sequelize.query<{
+      role_permissions: string[];
+      granted: string[];
+      revoked: string[];
+      permissions: string[];
+    }>(BREAKDOWN_SQL, { replacements: { userId }, type: QueryTypes.SELECT });
+    return {
+      rolePermissions: row.role_permissions,
+      granted: row.granted,
+      revoked: row.revoked,
+      permissions: row.permissions,
+    };
   }
 
   async findById(

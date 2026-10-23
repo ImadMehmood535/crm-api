@@ -109,6 +109,8 @@ export class AcceptInviteCommandHandler implements ICommandHandler<
 
     const account = await this.authQueries.findAccount(ownerId);
     if (!account) throw new UnauthenticatedError();
+    // Accepting signs the new owner in, so it counts as their first sign-in.
+    await this.users.markLoggedIn(ownerId);
     return this.sessionIssuer.start(account.user, command.meta);
   }
 }

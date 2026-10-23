@@ -28,7 +28,7 @@ export const PERMISSION_CATALOGUE: readonly CatalogueModule[] = [
       ['view', 'View roles'],
       ['create', 'Create roles'],
       ['edit', 'Edit roles'],
-      ['delete', 'Delete roles'],
+      ['delete', 'Deactivate roles'],
     ],
   },
   {

@@ -87,6 +87,7 @@ describe('AcceptInviteCommandHandler', () => {
       }),
       {},
     );
+    expect(users.markLoggedIn).toHaveBeenCalledWith('owner-1');
     expect(sessions.create).toHaveBeenCalled();
     expect(session.refreshToken).toBe('new-refresh');
   });

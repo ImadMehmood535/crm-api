@@ -22,23 +22,31 @@ see, is 404.
 - **THEN** the API answers 404 `NOT_FOUND`
 
 ### Requirement: Create user
-`POST /api/v1/users` with `{ email, firstName, lastName, roleIds[], level?, teamIds? }` (needs
-`users.create`) SHALL answer 201 with `{ user, temporaryPassword }`. The new user must reset the
-password at first login.
-- at least one role is required;
-- unknown, inactive or other-company role ids are 422 on `roleIds`;
-- the built-in role is 403 `SYSTEM_ROLE_PROTECTED`;
-- a role holding codes the caller lacks is 403 `PERMISSION_ESCALATION`;
-- a registered email is 409 `EMAIL_CONFLICT`.
+`POST /api/v1/users` with `{ email, firstName, lastName, roleIds?, level?, teamIds? }` (needs
+`users.create`) SHALL answer 201 with `{ user, temporaryPassword }`; the user must reset the password
+at first login. Admins and heads get their level's built-in role (`roleIds` ignored); a member needs
+at least one role (422 `roleIds`). A registered email is 409 `EMAIL_CONFLICT`.
 
 #### Scenario: Create
 - **WHEN** the owner adds `hira@skyline.example.com` with the role "HR Assistant"
 - **THEN** the API answers 201, and Hira's login has `mustResetPassword: true` and that role's permissions
 
 #### Scenario: No roles
-- **WHEN** `roleIds` is empty
+- **WHEN** a member is created with `roleIds` empty
 - **THEN** the API answers 422 with a detail for `roleIds`
 
+#### Scenario: Admin gets the Admin role
+- **WHEN** the owner creates a user with `level: "admin"` and no `roleIds`
+- **THEN** the user holds only the built-in "Admin" role and every catalogue code
+
+### Requirement: Member role errors
+Roles given to a member SHALL be active roles of the caller's company the caller may grant: unknown,
+inactive or other-company ids are 422 on `roleIds`; a built-in role is 403 `SYSTEM_ROLE_PROTECTED`;
+a role holding codes the caller lacks is 403 `PERMISSION_ESCALATION`.
+
+#### Scenario: Built-in role by hand
+- **WHEN** the caller sends the "Admin" role id in `roleIds`
+- **THEN** the API answers 403 `SYSTEM_ROLE_PROTECTED`
 
 ### Requirement: New user level and teams
 On create, `level` SHALL default to `member` and must be a level the caller may create (403
@@ -51,8 +59,8 @@ On create, `level` SHALL default to `member` and must be a level the caller may 
 
 ### Requirement: Update user
 `PATCH /api/v1/users/{id}` with `{ firstName?, lastName?, roleIds?, level? }` (needs `users.edit`)
-SHALL update the given fields and answer with the `TenantUser`. Role rules are the same as on
-create, and level changes follow the org-hierarchy rules.
+SHALL update the given fields and answer with the `TenantUser`. A level change swaps the built-in
+role; moving to `member` needs `roleIds` (422 otherwise). `roleIds` for an admin or head is 422.
 Changing your own roles is 403 `FORBIDDEN_OPERATION`.
 
 #### Scenario: Change roles
@@ -62,6 +70,10 @@ Changing your own roles is 403 `FORBIDDEN_OPERATION`.
 #### Scenario: Own roles
 - **WHEN** a user changes their own `roleIds`
 - **THEN** the API answers 403 `FORBIDDEN_OPERATION`
+
+#### Scenario: Promote to head
+- **WHEN** the owner changes member M to `level: "department_head"`
+- **THEN** M holds only the built-in "Department Head" role
 
 ### Requirement: Management safeguards
 Editing, activating, deactivating or resetting the password of the company owner SHALL be 403

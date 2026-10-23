@@ -1,6 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { isRoleLevel } from '@shared/auth/LevelRoles';
+import { ValidationFailedError } from '@shared/errors/AppError';
 import { assertCanCreateLevel } from '@domain/aggregates/UserAggregate/UserLevel';
 import { AUDIT_LOG, IAuditLog } from '@infrastructure/audit/abstraction/IAuditLog';
 import { IUnitOfWork, UNIT_OF_WORK } from '@infrastructure/persistence/abstraction/IUnitOfWork';
@@ -54,22 +56,39 @@ export class UpdateTenantUserCommandHandler implements ICommandHandler<
     if (changes.firstName !== undefined || changes.lastName !== undefined) {
       user.rename(changes.firstName ?? user.firstName, changes.lastName ?? user.lastName);
     }
-    if (changes.level !== undefined && changes.level !== target.level) {
+    const nextLevel = changes.level ?? target.level;
+    const levelChanged = nextLevel !== target.level;
+    if (levelChanged) {
       const actorLevel = viewerOf(actor).level;
       assertCanCreateLevel(actorLevel, target.level);
-      assertCanCreateLevel(actorLevel, changes.level);
-      user.changeLevel(changes.level);
+      assertCanCreateLevel(actorLevel, nextLevel);
+      user.changeLevel(nextLevel);
     }
-    const roleIds = changes.roleIds ? [...new Set(changes.roleIds)] : undefined;
-    if (roleIds)
+    // Admins and heads hold their level's built-in role; members hold roles picked by hand, so a
+    // move down to member must say which.
+    let memberRoleIds: string[] | undefined;
+    if (isRoleLevel(nextLevel)) {
+      if (changes.roleIds !== undefined) {
+        throw ValidationFailedError.forField(
+          'roleIds',
+          'Admins and department heads get their roles from their level.',
+        );
+      }
+    } else if (changes.roleIds !== undefined || (levelChanged && isRoleLevel(target.level))) {
+      memberRoleIds = [...new Set(changes.roleIds ?? [])];
       assertAssignable(
         actor,
-        roleIds,
-        await this.roles.findActiveTenantRoles(organizationId, roleIds),
+        memberRoleIds,
+        await this.roles.findActiveTenantRoles(organizationId, memberRoleIds),
       );
+    }
 
     await this.unitOfWork.run(async (tx) => {
       await this.users.update(user, tx);
+      const roleIds =
+        levelChanged && isRoleLevel(nextLevel)
+          ? [await this.roles.levelRoleId(organizationId, nextLevel, tx)]
+          : memberRoleIds;
       if (roleIds) await this.users.replaceRoles(command.id, roleIds, actor.userId, tx);
       await this.audit.record(
         {

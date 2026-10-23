@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, QueryTypes, Transaction } from 'sequelize';
 
+import { LEVEL_ROLE, RoleLevel } from '@shared/auth/LevelRoles';
 import { Role } from '@domain/aggregates/RoleAggregate/Role';
 import { RoleModel } from '@domain/aggregates/RoleAggregate/RoleModel';
 import { RolePermissionModel } from '@domain/aggregates/RoleAggregate/RolePermissionModel';
@@ -26,6 +27,17 @@ export class RoleRepository implements IRoleRepository {
         isSystemRole: true,
         isActive: true,
       },
+      { transaction: tx as Transaction },
+    );
+    return row.id;
+  }
+
+  async levelRoleId(organizationId: string, level: RoleLevel, tx?: Tx): Promise<string> {
+    const where = { organizationId, levelRole: level, isActive: true };
+    const existing = await this.roleModel.findOne({ where, transaction: tx as Transaction });
+    if (existing) return existing.id;
+    const row = await this.roleModel.create(
+      { ...where, ...LEVEL_ROLE[level], isSystemRole: false },
       { transaction: tx as Transaction },
     );
     return row.id;
@@ -126,7 +138,7 @@ export class RoleRepository implements IRoleRepository {
       row.code,
       row.description,
       permissions,
-      row.isSystemRole,
+      row.isSystemRole || row.levelRole !== null,
       row.isActive,
     );
   }

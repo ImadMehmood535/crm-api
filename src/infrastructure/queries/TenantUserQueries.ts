@@ -40,7 +40,7 @@ const ORDER = 'ORDER BY u.created_at, u.id LIMIT :limit OFFSET :offset';
 const SCOPE = 'AND u.id IN (SELECT id FROM visible)';
 const BY_ID = 'WHERE u.organization_id = :organizationId AND u.id = :id';
 
-// Owners see the whole company; everyone else sees through the hierarchy (VisibilitySql).
+// Owners and admins see the whole company; everyone else sees through the hierarchy (VisibilitySql).
 const LIST_SQL = `${SELECT} ${WHERE} ${ORDER}`;
 const COUNT_SQL = `SELECT count(*)::int AS total FROM users u ${WHERE}`;
 const BY_ID_SQL = `${SELECT} ${BY_ID}`;
@@ -48,7 +48,7 @@ const SCOPED_LIST_SQL = `WITH ${VISIBLE_USERS_CTE} ${SELECT} ${WHERE} ${SCOPE} $
 const SCOPED_COUNT_SQL = `WITH ${VISIBLE_USERS_CTE} SELECT count(*)::int AS total FROM users u ${WHERE} ${SCOPE}`;
 const SCOPED_BY_ID_SQL = `WITH ${VISIBLE_USERS_CTE} ${SELECT} ${BY_ID} ${SCOPE}`;
 
-const scoped = (viewer: Viewer): boolean => viewer.level !== 'owner';
+const scoped = (viewer: Viewer): boolean => viewer.level !== 'owner' && viewer.level !== 'admin';
 const viewerReplacements = (viewer: Viewer): Record<string, string> => ({
   viewerId: viewer.userId,
   viewerLevel: viewer.level,

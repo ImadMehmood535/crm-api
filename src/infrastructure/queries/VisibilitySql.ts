@@ -18,8 +18,7 @@ export function effectiveLevelSql(alias: string): string {
 /**
  * Users the viewer may see, as CTE `visible(id)`. Replacements: :organizationId, :viewerId,
  * :viewerLevel.
- * - owner: everyone in the company;
- * - admin: owners, admins and everyone created (transitively) by an admin;
+ * - owner and admin: everyone in the company (callers skip this CTE for them);
  * - department head: themselves, people they created (transitively) and the members of the teams
  *   of the departments they head;
  * - member: themselves and the members of their teams.
@@ -28,11 +27,6 @@ export const VISIBLE_USERS_CTE = `
   RECURSIVE company AS (
     SELECT u.id, u.created_by, ${effectiveLevelSql('u')} AS level
     FROM users u WHERE u.organization_id = :organizationId
-  ),
-  admin_tree AS (
-    SELECT id FROM company WHERE level = 'admin'
-    UNION
-    SELECT c.id FROM company c JOIN admin_tree t ON c.created_by = t.id
   ),
   own_tree AS (
     SELECT CAST(:viewerId AS uuid) AS id
@@ -51,9 +45,7 @@ export const VISIBLE_USERS_CTE = `
     WHERE tm.team_id IN (SELECT team_id FROM team_members WHERE user_id = :viewerId)
   ),
   visible AS (
-    SELECT id FROM company WHERE :viewerLevel = 'owner'
-    UNION SELECT id FROM company WHERE :viewerLevel = 'admin' AND level IN ('owner', 'admin')
-    UNION SELECT id FROM admin_tree WHERE :viewerLevel = 'admin'
+    SELECT id FROM company WHERE :viewerLevel IN ('owner', 'admin')
     UNION SELECT id FROM own_tree WHERE :viewerLevel = 'department_head'
     UNION SELECT id FROM head_members WHERE :viewerLevel = 'department_head'
     UNION SELECT CAST(:viewerId AS uuid) WHERE :viewerLevel = 'member'

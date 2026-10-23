@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { isRoleLevel } from '@shared/auth/LevelRoles';
 import { newTemporaryPassword } from '@shared/utils/TemporaryPassword';
 import { User } from '@domain/aggregates/UserAggregate/User';
 import { assertCanCreateLevel } from '@domain/aggregates/UserAggregate/UserLevel';
@@ -65,12 +66,15 @@ export class CreateTenantUserCommandHandler implements ICommandHandler<
       level,
       createdBy: actor.userId,
     });
-    const roleIds = [...new Set(input.roleIds)];
-    assertAssignable(
-      actor,
-      roleIds,
-      await this.roles.findActiveTenantRoles(organizationId, roleIds),
-    );
+    // Admins and heads get their level's built-in role; only members are given roles by hand.
+    const memberRoleIds = isRoleLevel(level) ? [] : [...new Set(input.roleIds ?? [])];
+    if (!isRoleLevel(level)) {
+      assertAssignable(
+        actor,
+        memberRoleIds,
+        await this.roles.findActiveTenantRoles(organizationId, memberRoleIds),
+      );
+    }
     const teamIds = [...new Set(input.teamIds ?? [])];
     await assertManageableTeams(actor, organizationId, teamIds, this.teams, this.departments);
     if (await this.users.emailExists(user.email)) throw emailConflict();
@@ -80,6 +84,9 @@ export class CreateTenantUserCommandHandler implements ICommandHandler<
     const userId = await this.unitOfWork.run(async (tx) => {
       const saved = await this.users.save(user, passwordHash, true, tx);
       const id = saved.id as string;
+      const roleIds = isRoleLevel(level)
+        ? [await this.roles.levelRoleId(organizationId, level, tx)]
+        : memberRoleIds;
       await this.users.replaceRoles(id, roleIds, actor.userId, tx);
       for (const teamId of teamIds) await this.teams.addMember(teamId, id, actor.userId, tx);
       await this.audit.record(

@@ -22,6 +22,10 @@ export class RoleModel extends BaseModel {
   @Column({ type: DataType.BOOLEAN, allowNull: false })
   isSystemRole!: boolean;
 
+  /** Set on the built-in level roles ('admin' | 'department_head'); null for other roles. */
+  @Column({ type: DataType.STRING(20), allowNull: true })
+  levelRole!: string | null;
+
   @Column({ type: DataType.BOOLEAN, allowNull: false })
   isActive!: boolean;
 }

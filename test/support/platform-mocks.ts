@@ -104,6 +104,9 @@ export function roleRepository(): jest.Mocked<IRoleRepository> {
   return {
     createOwnerRole: jest.fn().mockResolvedValue('role-1'),
     findPlatformRoleId: jest.fn().mockResolvedValue('role-admin'),
+    levelRoleId: jest
+      .fn()
+      .mockImplementation((_org: string, level: string) => Promise.resolve(`role-level-${level}`)),
     saveTenantRole: jest.fn(),
     updateTenantRole: jest.fn(),
     findTenantRole: jest.fn(),

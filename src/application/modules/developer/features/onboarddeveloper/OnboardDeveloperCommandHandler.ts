@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { ROLE_LEVELS } from '@shared/auth/LevelRoles';
 import { newTemporaryPassword } from '@shared/utils/TemporaryPassword';
 import { Organization } from '@domain/aggregates/OrganizationAggregate/Organization';
 import { User, normalizeEmail } from '@domain/aggregates/UserAggregate/User';
@@ -77,6 +78,7 @@ export class OnboardDeveloperCommandHandler implements ICommandHandler<
       const saved = await this.organizations.save(organization, tx);
       const id = saved.id as string;
       const roleId = await this.roles.createOwnerRole(id, tx);
+      for (const level of ROLE_LEVELS) await this.roles.levelRoleId(id, level, tx);
       const owner = await this.users.save(
         User.createTenantUser(id, {
           ...command.owner,

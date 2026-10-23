@@ -40,13 +40,16 @@ user's level also requires that the caller may create the user's current level.
 
 ### Requirement: Who sees whom
 User listings, user detail and user management actions SHALL be limited to the users the caller
-may see; a user the caller may not see is 404 `NOT_FOUND`. The owner sees every user of the company.
-An admin sees the owner, every admin, and every user created (directly or through others) by an
-admin.
+may see; a user the caller may not see is 404 `NOT_FOUND`. The owner and every admin see every user
+of the company. Admins still cannot manage the owner.
 
 #### Scenario: Owner sees all
 - **WHEN** the owner lists users
 - **THEN** every user of the company is listed
+
+#### Scenario: Admin sees the whole company
+- **WHEN** the owner created department head D directly and an admin lists users
+- **THEN** D is in the admin's list, together with every other user of the company
 
 ### Requirement: Department heads and members see their own people
 A department head SHALL see themselves, the members of the teams of the departments they head, and

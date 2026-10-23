@@ -41,15 +41,10 @@ describe('TenantUserQueries (hierarchy visibility)', () => {
     );
   });
 
-  it("should show an admin the owner, all admins and the admins' people, not the owner's direct branch", async () => {
-    expect(await seenBy('admin2', 'admin')).toEqual([
-      'admin1',
-      'admin2',
-      'head1',
-      'member1',
-      'member2',
-      'owner',
-    ]);
+  it("should show an admin the whole company, including the owner's direct branch", async () => {
+    expect(await seenBy('admin2', 'admin')).toEqual(
+      ['admin1', 'admin2', 'head1', 'head2', 'member1', 'member2', 'member3', 'owner'].sort(),
+    );
   });
 
   it("should show a department head their own people and their departments' team members", async () => {
@@ -63,7 +58,12 @@ describe('TenantUserQueries (hierarchy visibility)', () => {
   });
 
   it('should hide users outside the viewer scope from findById, and expose level and teams', async () => {
-    expect(await queries.findById(h.org, h.head2, { userId: h.admin1, level: 'admin' })).toBeNull();
+    expect(
+      await queries.findById(h.org, h.head2, { userId: h.admin1, level: 'admin' }),
+    ).not.toBeNull();
+    expect(
+      await queries.findById(h.org, h.head2, { userId: h.head1, level: 'department_head' }),
+    ).toBeNull();
     const member = await queries.findById(h.org, h.member1, {
       userId: h.head1,
       level: 'department_head',

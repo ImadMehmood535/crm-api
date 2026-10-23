@@ -23,12 +23,9 @@ see, is 404.
 
 ### Requirement: Create user
 `POST /api/v1/users` with `{ email, firstName, lastName, roleIds?, level?, teamIds? }` (needs
-`users.create`) SHALL answer 201 with `{ user, temporaryPassword }`. The new user must reset the
-password at first login. Roles depend on the level:
-- `admin` and `department_head` get their level's built-in role; `roleIds` is ignored;
-- a `member` needs at least one role (422 on `roleIds`);
-- other role errors: 422 `roleIds`, 403 `SYSTEM_ROLE_PROTECTED`, 403 `PERMISSION_ESCALATION`;
-- a registered email is 409 `EMAIL_CONFLICT`.
+`users.create`) SHALL answer 201 with `{ user, temporaryPassword }`; the user must reset the password
+at first login. Admins and heads get their level's built-in role (`roleIds` ignored); a member needs
+at least one role (422 `roleIds`). A registered email is 409 `EMAIL_CONFLICT`.
 
 #### Scenario: Create
 - **WHEN** the owner adds `hira@skyline.example.com` with the role "HR Assistant"
@@ -41,6 +38,15 @@ password at first login. Roles depend on the level:
 #### Scenario: Admin gets the Admin role
 - **WHEN** the owner creates a user with `level: "admin"` and no `roleIds`
 - **THEN** the user holds only the built-in "Admin" role and every catalogue code
+
+### Requirement: Member role errors
+Roles given to a member SHALL be active roles of the caller's company the caller may grant: unknown,
+inactive or other-company ids are 422 on `roleIds`; a built-in role is 403 `SYSTEM_ROLE_PROTECTED`;
+a role holding codes the caller lacks is 403 `PERMISSION_ESCALATION`.
+
+#### Scenario: Built-in role by hand
+- **WHEN** the caller sends the "Admin" role id in `roleIds`
+- **THEN** the API answers 403 `SYSTEM_ROLE_PROTECTED`
 
 ### Requirement: New user level and teams
 On create, `level` SHALL default to `member` and must be a level the caller may create (403

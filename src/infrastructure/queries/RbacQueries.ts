@@ -11,6 +11,7 @@ import {
   RoleListFilter,
   RoleReadModel,
 } from './abstraction/IRbacQueries';
+import { HEAD_CODES_SQL } from './EffectivePermissionsSql';
 import { containsPattern, searchOrNull } from './SqlText';
 
 const CATALOGUE_SQL = `
@@ -19,12 +20,16 @@ const CATALOGUE_SQL = `
   WHERE m.is_active
   ORDER BY m.sort_order, p.sort_order`;
 
-// The system (owner) role lists the whole catalogue; other roles their grants.
+// The owner and "Admin" roles list the whole catalogue, "Department Head" its set, others their grants.
 const ROLE_SELECT = `
-  SELECT r.id, r.name, r.code, r.description, r.is_system_role, r.created_at,
+  SELECT r.id, r.name, r.code, r.description, r.created_at,
+         (r.is_system_role OR r.level_role IS NOT NULL) AS is_system_role,
          (SELECT count(*)::int FROM user_roles ur WHERE ur.role_id = r.id) AS user_count,
-         CASE WHEN r.is_system_role
+         CASE WHEN r.is_system_role OR r.level_role = 'admin'
            THEN (SELECT coalesce(array_agg(p.code ORDER BY p.code), '{}') FROM permissions p)
+           WHEN r.level_role = 'department_head'
+           THEN (SELECT coalesce(array_agg(p.code ORDER BY p.code), '{}') FROM permissions p
+                 WHERE p.code IN (${HEAD_CODES_SQL}))
            ELSE (SELECT coalesce(array_agg(p.code ORDER BY p.code), '{}')
                  FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id WHERE rp.role_id = r.id)
          END AS permissions
@@ -35,7 +40,7 @@ const ROLE_WHERE = `
     AND (CAST(:term AS text) IS NULL OR r.name ILIKE :term)`;
 
 const ROLE_LIST_SQL = `${ROLE_SELECT} ${ROLE_WHERE}
-  ORDER BY r.is_system_role DESC, lower(r.name), r.id LIMIT :limit OFFSET :offset`;
+  ORDER BY r.is_system_role DESC, (r.level_role IS NOT NULL) DESC, lower(r.name), r.id LIMIT :limit OFFSET :offset`;
 const ROLE_COUNT_SQL = `SELECT count(*)::int AS total FROM roles r ${ROLE_WHERE}`;
 const ROLE_BY_ID_SQL = `${ROLE_SELECT} WHERE r.organization_id = :organizationId AND r.id = :id AND r.is_active`;
 

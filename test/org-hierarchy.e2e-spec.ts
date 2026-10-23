@@ -119,17 +119,9 @@ describe('Organisation hierarchy (e2e)', () => {
       expect(await userNames('owner')).toEqual(['owner', ...STAFF].sort());
     });
 
-    it("should show admins each other's people but not the owner's direct branch", async () => {
-      expect(await userNames('admin2')).toEqual([
-        'admin1',
-        'admin2',
-        'head1',
-        'member1',
-        'member2',
-        'owner',
-      ]);
-      const hidden = await as('admin2', 'get', `users/${h.head2}`).expect(404);
-      expect(hidden.body.error.code).toBe('NOT_FOUND');
+    it("should show an admin the whole company, including the owner's direct branch", async () => {
+      expect(await userNames('admin2')).toEqual(['owner', ...STAFF].sort());
+      await as('admin2', 'get', `users/${h.head2}`).expect(200);
     });
 
     it("should show a head their departments' people and a member their teammates", async () => {
@@ -274,6 +266,89 @@ describe('Organisation hierarchy (e2e)', () => {
         .send(newUser('other@h.example.com', { teamIds: [h.hiring] }))
         .expect(422);
       expect(foreign.body.error.details[0].field).toBe('teamIds');
+    });
+  });
+
+  describe('built-in level roles', () => {
+    const roleCodes = (body: { roles: { code: string }[] }) => body.roles.map((r) => r.code);
+
+    it('should give a new admin the Admin role with every code, and a head the head set', async () => {
+      const admin = await as('owner', 'post', 'users')
+        .send({
+          email: 'auto-admin@h.example.com',
+          firstName: 'A',
+          lastName: 'Admin',
+          level: 'admin',
+        })
+        .expect(201);
+      expect(roleCodes(admin.body.data.user)).toEqual(['level_admin']);
+      expect(admin.body.data.user.permissions).toHaveLength(26);
+
+      const head = await as('admin1', 'post', 'users')
+        .send({ ...newUser('auto-head@h.example.com'), level: 'department_head' })
+        .expect(201);
+      expect(roleCodes(head.body.data.user)).toEqual(['level_department_head']);
+      expect(head.body.data.user.permissions).toEqual([
+        'departments.view',
+        'projects.view',
+        'roles.view',
+        'teams.create',
+        'teams.delete',
+        'teams.edit',
+        'teams.view',
+        'units.view',
+        'users.create',
+        'users.deactivate',
+        'users.edit',
+        'users.view',
+      ]);
+    });
+
+    it('should require roles for members and refuse hand-picked roles for admins', async () => {
+      const noRoles = await as('owner', 'post', 'users')
+        .send({ email: 'm-none@h.example.com', firstName: 'M', lastName: 'None' })
+        .expect(422);
+      expect(noRoles.body.error.details[0].field).toBe('roleIds');
+
+      const promoted = await as('owner', 'patch', `users/${h.member1}`)
+        .send({ level: 'admin' })
+        .expect(200);
+      expect(roleCodes(promoted.body.data)).toEqual(['level_admin']);
+      const picked = await as('owner', 'patch', `users/${h.member1}`)
+        .send({ roleIds: [staffRoleId] })
+        .expect(422);
+      expect(picked.body.error.details[0].field).toBe('roleIds');
+
+      await as('owner', 'patch', `users/${h.member1}`).send({ level: 'member' }).expect(422);
+      const demoted = await as('owner', 'patch', `users/${h.member1}`)
+        .send({ level: 'member', roleIds: [staffRoleId] })
+        .expect(200);
+      expect(roleCodes(demoted.body.data)).toEqual(['staff']);
+    });
+
+    it('should list the level roles as locked built-in roles', async () => {
+      await as('owner', 'post', 'users')
+        .send({
+          email: 'auto-admin2@h.example.com',
+          firstName: 'A',
+          lastName: 'Two',
+          level: 'admin',
+        })
+        .expect(201);
+      const list = await as('owner', 'get', 'roles').expect(200);
+      const admin = (list.body.data as { code: string; id: string; isSystem: boolean }[]).find(
+        (r) => r.code === 'level_admin',
+      )!;
+      expect(admin.isSystem).toBe(true);
+
+      const edit = await as('owner', 'patch', `roles/${admin.id}`)
+        .send({ name: 'Boss' })
+        .expect(403);
+      expect(edit.body.error.code).toBe('SYSTEM_ROLE_PROTECTED');
+      const assign = await as('owner', 'post', 'users')
+        .send(newUser('by-hand@h.example.com', { roleIds: [admin.id] }))
+        .expect(403);
+      expect(assign.body.error.code).toBe('SYSTEM_ROLE_PROTECTED');
     });
   });
 });

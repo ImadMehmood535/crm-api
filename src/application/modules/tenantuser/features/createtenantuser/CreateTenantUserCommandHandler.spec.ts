@@ -178,4 +178,45 @@ describe('CreateTenantUserCommandHandler', () => {
       handler.execute(new CreateTenantUserCommand(owner, { ...input, teamIds: ['team-x'] }, META)),
     ).rejects.toMatchObject({ status: 422, details: [{ field: 'teamIds' }] });
   });
+
+  it('should give admins and heads their built-in role, ignoring roleIds', async () => {
+    const { handler, users, roles } = setup();
+
+    await handler.execute(new CreateTenantUserCommand(owner, { ...input, level: 'admin' }, META));
+    await handler.execute(
+      new CreateTenantUserCommand(
+        owner,
+        { ...input, roleIds: undefined, level: 'department_head' },
+        META,
+      ),
+    );
+
+    expect(roles.findActiveTenantRoles).not.toHaveBeenCalled();
+    expect(users.replaceRoles).toHaveBeenNthCalledWith(
+      1,
+      'user-2',
+      ['role-level-admin'],
+      owner.userId,
+      {},
+    );
+    expect(users.replaceRoles).toHaveBeenNthCalledWith(
+      2,
+      'user-2',
+      ['role-level-department_head'],
+      owner.userId,
+      {},
+    );
+  });
+
+  it('should require roles for a member', async () => {
+    const { handler, roles } = setup();
+    roles.findActiveTenantRoles.mockResolvedValue([]);
+
+    await expect(
+      handler.execute(new CreateTenantUserCommand(owner, { ...input, roleIds: undefined }, META)),
+    ).rejects.toMatchObject({
+      status: 422,
+      details: [{ field: 'roleIds', messages: ['Choose at least one role.'] }],
+    });
+  });
 });

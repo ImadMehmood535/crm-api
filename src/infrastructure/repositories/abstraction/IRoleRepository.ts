@@ -1,3 +1,4 @@
+import { RoleLevel } from '@shared/auth/LevelRoles';
 import { Role } from '@domain/aggregates/RoleAggregate/Role';
 import { Tx } from '@infrastructure/persistence/abstraction/IUnitOfWork';
 
@@ -9,6 +10,8 @@ export interface IRoleRepository {
   /** Creates the company's built-in owner role (system, read-only) and returns its id. */
   createOwnerRole(organizationId: string, tx?: Tx): Promise<string>;
   findPlatformRoleId(code: string): Promise<string | null>;
+  /** Id of the company's built-in role for this level, created on first use. */
+  levelRoleId(organizationId: string, level: RoleLevel, tx?: Tx): Promise<string>;
 
   /** Inserts a company role with its grants; returns it with its id. */
   saveTenantRole(role: Role, grantedBy: string, tx?: Tx): Promise<Role>;

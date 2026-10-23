@@ -138,6 +138,39 @@ describe('Tenant user management handlers', () => {
     ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN_OPERATION' });
   });
 
+  it('should swap the built-in role on promotion and require roles on a move down to member', async () => {
+    const { users, update } = setup();
+    await update.execute(
+      new UpdateTenantUserCommand(owner, 'user-2', { level: 'department_head' }, META),
+    );
+    expect(users.replaceRoles).toHaveBeenCalledWith(
+      'user-2',
+      ['role-level-department_head'],
+      owner.userId,
+      {},
+    );
+
+    const head = tenantUserReadModel({ level: 'department_head' });
+    await expect(
+      setup(head).update.execute(
+        new UpdateTenantUserCommand(owner, 'user-2', { level: 'member' }, META),
+      ),
+    ).rejects.toMatchObject({ status: 422, details: [{ field: 'roleIds' }] });
+    const demote = setup(head);
+    await demote.update.execute(
+      new UpdateTenantUserCommand(owner, 'user-2', { level: 'member', roleIds: ['role-2'] }, META),
+    );
+    expect(demote.users.replaceRoles).toHaveBeenCalledWith('user-2', ['role-2'], owner.userId, {});
+  });
+
+  it('should refuse hand-picked roles for an admin or a head', async () => {
+    await expect(
+      setup(tenantUserReadModel({ level: 'admin' })).update.execute(
+        new UpdateTenantUserCommand(owner, 'user-2', { roleIds: ['role-2'] }, META),
+      ),
+    ).rejects.toMatchObject({ status: 422, details: [{ field: 'roleIds' }] });
+  });
+
   it('should deactivate with session revocation, reactivate without, and refuse self-deactivation', async () => {
     const { users, sessions, status } = setup();
 

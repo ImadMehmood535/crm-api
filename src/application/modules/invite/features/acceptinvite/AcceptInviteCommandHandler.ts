@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { ROLE_LEVELS } from '@shared/auth/LevelRoles';
 import { UnauthenticatedError } from '@shared/errors/AppError';
 import { hashToken } from '@shared/utils/SecureToken';
 import { inviteInvalid } from '@domain/aggregates/InviteAggregate/Invite';
@@ -74,6 +75,7 @@ export class AcceptInviteCommandHandler implements ICommandHandler<
       );
       const organizationId = organization.id as string;
       const roleId = await this.roles.createOwnerRole(organizationId, tx);
+      for (const level of ROLE_LEVELS) await this.roles.levelRoleId(organizationId, level, tx);
       const owner = await this.users.save(
         User.createTenantUser(organizationId, {
           email: invite.email,

@@ -33,11 +33,11 @@ It lives in database tables filled by an idempotent seed, never in application l
 
 ### Requirement: Effective permissions
 A tenant user's effective permissions SHALL be:
-- every catalogue code, when they hold the company's built-in owner role (`developer_super_user`),
-  including codes added later;
-- otherwise, the union of the codes granted to their active roles.
+- every catalogue code (including later ones) for holders of the owner role or the "Admin" level role;
+- the team-management set for holders of the "Department Head" level role;
+- plus the union of the codes granted to their other active roles.
 
-Platform users have none. Permissions are resolved on every request, so changes apply immediately.
+Platform users have none. Permissions are resolved on every request.
 
 #### Scenario: Owner holds everything
 - **WHEN** a company owner signs in
@@ -50,6 +50,10 @@ Platform users have none. Permissions are resolved on every request, so changes 
 #### Scenario: Grant revoked
 - **WHEN** a role loses `users.view` while its holder is signed in
 - **THEN** the holder's next `GET /api/v1/users` answers 403 `PERMISSION_DENIED`
+
+#### Scenario: Department head set
+- **WHEN** a department head signs in
+- **THEN** `user.permissions` is exactly `departments.view`, `projects.view`, `roles.view`, `teams.*`, `units.view` and `users.*`
 
 ### Requirement: Tenant endpoints check plane and permission
 Every tenant endpoint SHALL answer 403 `PERMISSION_DENIED` to platform users and to tenant users

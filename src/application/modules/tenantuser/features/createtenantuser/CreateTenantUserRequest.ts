@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
-  ArrayMinSize,
   IsArray,
   IsEmail,
   IsIn,
@@ -30,12 +29,16 @@ export class CreateTenantUserRequest {
   @Length(1, 100, { message: 'Last name is required.' })
   lastName!: string;
 
-  @ApiProperty({ type: [String], format: 'uuid' })
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: 'Required for members; admins and department heads get their built-in role.',
+  })
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1, { message: 'Choose at least one role.' })
   @ArrayMaxSize(50)
   @IsUUID('all', { each: true, message: 'One or more roles do not exist.' })
-  roleIds!: string[];
+  roleIds?: string[];
 
   @ApiPropertyOptional({ enum: CREATABLE_LEVELS, default: 'member' })
   @IsOptional()

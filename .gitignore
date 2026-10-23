@@ -1,6 +1,46 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-coverage/
-.env
+build/
 *.tsbuildinfo
+
+# Tests
+coverage/
+.nyc_output/
+junit.xml
+
+# Environment (commit .env.example only)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local uploads / temp files
+uploads/
+tmp/
+.tmp/
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
 .DS_Store
+Thumbs.db
+
+# Claude Code: keep shared skills/commands, ignore personal settings
+.claude/settings.local.json
+
+# Local database dumps
+*.dump
+*.sql.gz

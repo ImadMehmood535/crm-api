@@ -107,5 +107,11 @@ export function tenantUserQueries(
   return {
     findList: jest.fn().mockResolvedValue({ rows: [tenantUserReadModel()], total: 1 }),
     findById: jest.fn().mockResolvedValue(found),
+    findPermissionBreakdown: jest.fn().mockResolvedValue({
+      rolePermissions: ['users.view'],
+      granted: [],
+      revoked: [],
+      permissions: ['users.view'],
+    }),
   };
 }

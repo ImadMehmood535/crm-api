@@ -20,6 +20,7 @@ export type AuditAction =
   | 'user.activated'
   | 'user.deactivated'
   | 'user.password_reset'
+  | 'user.permissions_updated'
   | 'branding.updated'
   | 'branding.asset_uploaded'
   | 'branding.asset_removed'

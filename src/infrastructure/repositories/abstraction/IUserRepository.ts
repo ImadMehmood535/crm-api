@@ -26,6 +26,14 @@ export interface IUserRepository {
     assignedBy: string,
     tx?: Tx,
   ): Promise<void>;
+  /** Replaces the user's permission overrides (codes must exist; grants and revokes disjoint). */
+  replacePermissionOverrides(
+    userId: string,
+    grants: readonly string[],
+    revokes: readonly string[],
+    setBy: string,
+    tx?: Tx,
+  ): Promise<void>;
   findByEmail(email: string): Promise<User | null>;
   findCredential(userId: string): Promise<Credential | null>;
   setPassword(userId: string, passwordHash: string, mustReset: boolean, tx?: Tx): Promise<void>;

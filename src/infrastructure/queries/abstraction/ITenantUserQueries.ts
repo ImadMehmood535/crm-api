@@ -32,7 +32,17 @@ export interface TenantUserListFilter extends PageRequest {
   status?: string;
 }
 
+/** A user's permissions split by source (all sorted). */
+export interface PermissionBreakdownReadModel {
+  rolePermissions: string[];
+  granted: string[];
+  revoked: string[];
+  permissions: string[];
+}
+
 export interface ITenantUserQueries {
+  /** Role codes, overrides and the effective set of one user (no visibility check). */
+  findPermissionBreakdown(userId: string): Promise<PermissionBreakdownReadModel>;
   findList(filter: TenantUserListFilter): Promise<{ rows: TenantUserReadModel[]; total: number }>;
   /** null when the user does not exist in this company or the viewer may not see them. */
   findById(organizationId: string, id: string, viewer: Viewer): Promise<TenantUserReadModel | null>;

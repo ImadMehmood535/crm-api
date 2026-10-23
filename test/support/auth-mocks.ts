@@ -68,6 +68,7 @@ export function userRepository(): jest.Mocked<IUserRepository> {
     findCredential: jest.fn(),
     setPassword: jest.fn(),
     markLoggedIn: jest.fn(),
+    replacePermissionOverrides: jest.fn().mockResolvedValue(undefined),
   };
 }
 

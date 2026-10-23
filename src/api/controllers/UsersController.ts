@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -12,6 +12,10 @@ import {
   TenantUserResponse,
   TenantUserWithPasswordResponse,
 } from '@application/modules/tenantuser/features/gettenantuser/TenantUserResponse';
+import { GetUserPermissionsQuery } from '@application/modules/tenantuser/features/getuserpermissions/GetUserPermissionsQuery';
+import { UserPermissionsResponse } from '@application/modules/tenantuser/features/getuserpermissions/UserPermissionsResponse';
+import { SetUserPermissionsCommand } from '@application/modules/tenantuser/features/setuserpermissions/SetUserPermissionsCommand';
+import { SetUserPermissionsRequest } from '@application/modules/tenantuser/features/setuserpermissions/SetUserPermissionsRequest';
 import { GetTenantUsersQuery } from '@application/modules/tenantuser/features/gettenantusers/GetTenantUsersQuery';
 import { GetTenantUsersRequest } from '@application/modules/tenantuser/features/gettenantusers/GetTenantUsersRequest';
 import { ResetTenantUserPasswordCommand } from '@application/modules/tenantuser/features/resettenantuserpassword/ResetTenantUserPasswordCommand';
@@ -129,5 +133,39 @@ export class UsersController {
     @ClientMeta() meta: RequestMeta,
   ): Promise<TenantUserWithPasswordResponse> {
     return this.commandBus.execute(new ResetTenantUserPasswordCommand(actor, id, meta));
+  }
+
+  @Get(':id/permissions')
+  @ApiOperation({
+    summary:
+      "A user's permissions by source (roles, granted, revoked, effective). Needs users.view",
+  })
+  @ApiResponse({ status: 200, type: UserPermissionsResponse })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND' })
+  findPermissions(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUuidPipe) id: string,
+  ): Promise<UserPermissionsResponse> {
+    return this.queryBus.execute(new GetUserPermissionsQuery(actor, id));
+  }
+
+  @Put(':id/permissions')
+  @ApiOperation({
+    summary:
+      "Set one user's effective permissions (stored as overrides on top of their roles). Needs users.edit",
+  })
+  @ApiResponse({ status: 200, type: UserPermissionsResponse })
+  @ApiResponse({ status: 403, description: 'FORBIDDEN_OPERATION | PERMISSION_ESCALATION' })
+  @ApiResponse({ status: 404, description: 'NOT_FOUND' })
+  @ApiResponse({ status: 422, description: 'VALIDATION_FAILED' })
+  setPermissions(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUuidPipe) id: string,
+    @Body() request: SetUserPermissionsRequest,
+    @ClientMeta() meta: RequestMeta,
+  ): Promise<UserPermissionsResponse> {
+    return this.commandBus.execute(
+      new SetUserPermissionsCommand(actor, id, request.permissions, meta),
+    );
   }
 }
